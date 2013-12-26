@@ -2,7 +2,7 @@ language: go
 go:
   - 1.2
 install:
-  - go get -u github.com/funkygao/goutil
+  - go get -u github.com/funkygao/golib
 script:
   - pushd $TRAVIS_BUILD_DIR
   - go test -v ./...
