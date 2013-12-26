@@ -1,0 +1,11 @@
+language: go
+go:
+  - 1.2
+install:
+  - go get -u github.com/funkygao/goutil
+script:
+  - pushd $TRAVIS_BUILD_DIR
+  - go test -v ./...
+  - popd
+notifications:
+  email: false
