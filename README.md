@@ -1,7 +1,7 @@
-golib
-=====
+goserver
+========
 
-golang common facilities lib
+golang common facilities lib for server programs
 
 *   signal handling
 *   locking process instance
