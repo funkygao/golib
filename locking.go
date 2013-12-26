@@ -12,13 +12,13 @@ func InstanceLocked(lockfileName string) bool {
 	return err == nil
 }
 
-func lockInstance(lockfileName string) {
+func LockInstance(lockfileName string) {
 	pid := fmt.Sprintf("%d", os.Getpid())
 	if err := ioutil.WriteFile(lockfileName, []byte(pid), 0644); err != nil {
 		panic(err)
 	}
 }
 
-func unlockInstance(lockfileName string) {
+func UnlockInstance(lockfileName string) {
 	syscall.Unlink(lockfileName)
 }
