@@ -1,11 +1,12 @@
-goserver
-========
+golib
+=====
 
-golang common facilities lib for server programs
+golang common facilities lib
 
 *   signal handling
 *   locking process instance
 *   daemonize
+*   LRU
 *   and more
 
 
