@@ -1,1 +1,1 @@
-package goserver
+package golib

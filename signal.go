@@ -1,4 +1,4 @@
-package goserver
+package golib
 
 import (
 	"os"
