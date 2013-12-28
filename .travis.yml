@@ -2,6 +2,8 @@ language: go
 go:
   - 1.2
 install:
+  - go get github.com/go-sql-driver/mysql
+  - go get github.com/mattn/go-sqlite3
   - go get -u github.com/funkygao/golib
 script:
   - pushd $TRAVIS_BUILD_DIR
