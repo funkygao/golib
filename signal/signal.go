@@ -1,4 +1,4 @@
-package golib
+package signal
 
 import (
 	"os"
@@ -6,16 +6,16 @@ import (
 	"sync"
 )
 
-type signalHandler func(os.Signal)
+type SignalHandler func(os.Signal)
 
 var signals = struct {
 	sync.Mutex // map in go is not thread/goroutine safe
 
-	handlers map[os.Signal]signalHandler
+	handlers map[os.Signal]SignalHandler
 	ch       chan os.Signal
 }{
-	handlers: make(map[os.Signal]signalHandler),
-	ch:       make(chan os.Signal, 20),
+	handlers: make(map[os.Signal]SignalHandler),
+	ch:       make(chan os.Signal),
 }
 
 func init() {
@@ -31,14 +31,24 @@ func init() {
 	}()
 }
 
-func RegisterSignalHandler(sig os.Signal, handler signalHandler) {
+func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 	signals.Lock()
 	defer signals.Unlock()
 
-	if _, present := signals.handlers[sig]; !present {
+	_, present := signals.handlers[sig]
+	if !present {
 		signals.handlers[sig] = handler
 		signal.Notify(signals.ch, sig)
 	}
 }
 
-func IgnoreSignal(sig os.Signal) {}
+func IgnoreSignal(sig os.Signal) {
+	RegisterSignalHandler(sig, func(s os.Signal) {})
+}
+
+// Send a signal to current running proc
+func Kill(sig os.Signal) {
+	go func() {
+		signals.ch <- sig
+	}()
+}
