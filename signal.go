@@ -19,14 +19,16 @@ var signals = struct {
 }
 
 func init() {
-	for sig := range signals.ch {
-		signals.Lock() // map not goroutine safe in golang
-		handler := signals.handlers[sig]
-		signals.Unlock()
-		if handler != nil {
-			handler(sig)
+	go func() {
+		for sig := range signals.ch {
+			signals.Lock() // map not goroutine safe in golang
+			handler := signals.handlers[sig]
+			signals.Unlock()
+			if handler != nil {
+				handler(sig)
+			}
 		}
-	}
+	}()
 }
 
 func RegisterSignalHandler(sig os.Signal, handler signalHandler) {
