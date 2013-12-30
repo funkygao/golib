@@ -1,20 +1,21 @@
-package observer
+package main
 
 import (
+    ob "github.com/funkygao/golib/observer"
 	"fmt"
 	"time"
 )
 
-func ExampleObserver() {
+func main() {
 	go func() {
 		for {
 			time.Sleep(time.Duration(1) * time.Second)
-			Publish("foo", time.Now().Unix())
+			ob.Publish("foo", time.Now().Unix())
 		}
 	}()
 
 	eventCh1 := make(chan interface{})
-	Subscribe("foo", eventCh1)
+	ob.Subscribe("foo", eventCh1)
 	go func() {
 		for {
 			data := <-eventCh1
@@ -23,7 +24,7 @@ func ExampleObserver() {
 	}()
 
 	eventCh2 := make(chan interface{})
-	Subscribe("foo", eventCh2)
+	ob.Subscribe("foo", eventCh2)
 	go func() {
 		for {
 			data := <-eventCh2
