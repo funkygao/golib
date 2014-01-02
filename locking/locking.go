@@ -1,4 +1,4 @@
-package golib
+package locking
 
 import (
 	"fmt"
