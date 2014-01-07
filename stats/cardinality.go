@@ -21,6 +21,9 @@ func NewCardinalityCounter() *CardinalityCounter {
 func (this *CardinalityCounter) Add(key string, data interface{}) (err error) {
 	if _, ok := this.hll[key]; !ok {
 		this.hll[key], err = h.New(this.m)
+		if err != nil {
+			return
+		}
 	}
 
 	switch data.(type) {
@@ -59,10 +62,29 @@ func (this *CardinalityCounter) Reset(key string) {
 	this.hll[key].Reset()
 }
 
+func (this *CardinalityCounter) ResetAll() {
+	for key, _ := range this.hll {
+		this.Reset(key)
+	}
+}
+
 func (this *CardinalityCounter) Count(key string) uint64 {
 	if _, ok := this.hll[key]; !ok {
 		return 0
 	}
 
 	return this.hll[key].Count()
+}
+
+func (this *CardinalityCounter) Categories() []string {
+	val := make([]string, 0, 10)
+	for key, _ := range this.hll {
+		val = append(val, key)
+	}
+
+	return val
+}
+
+func (this *CardinalityCounter) Counters() map[string]*h.HyperLogLog {
+	return this.hll
 }

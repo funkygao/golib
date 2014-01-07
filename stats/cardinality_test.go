@@ -16,4 +16,6 @@ func TestCardinalityCounter(t *testing.T) {
 	c.Add("msg", "we are in China")
 	c.Add("msg", "where are you")
 	assert.Equal(t, uint64(2), c.Count("msg"))
+
+	assert.Equal(t, []string{"dau", "msg"}, c.Categories())
 }
