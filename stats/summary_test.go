@@ -17,4 +17,5 @@ func TestSummaryMean(t *testing.T) {
 	assert.Equal(t, sum/float64(len(vals)), s.Mean)
 	assert.Equal(t, 56., s.Max)
 	assert.Equal(t, 24.404576073624664, s.Sd())
+	assert.Equal(t, sum, s.Sum)
 }

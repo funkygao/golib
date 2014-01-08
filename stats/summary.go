@@ -6,6 +6,7 @@ import (
 
 type Summary struct {
 	Mean, devsq, Min, Max float64
+	Sum                   float64
 	N                     int
 }
 
@@ -14,6 +15,7 @@ func (s *Summary) Reset() {
 	s.Max = 0.0
 	s.Mean = 0.0
 	s.Min = 0.
+	s.Sum = 0.
 	s.devsq = 0.0
 }
 
@@ -32,6 +34,7 @@ func (s *Summary) Add(x float64) {
 	}
 
 	s.N++
+	s.Sum += x
 	t := x - s.Mean
 	s.Mean += t / float64(s.N)
 	s.devsq += t * (x - s.Mean)
