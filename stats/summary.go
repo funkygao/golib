@@ -5,13 +5,14 @@ import (
 )
 
 type Summary struct {
-	Mean, N, devsq, Min, Max float64
+	Mean, devsq, Min, Max float64
+	N                     int
 }
 
 func (s *Summary) Reset() {
+	s.N = 0
 	s.Max = 0.0
 	s.Mean = 0.0
-	s.N = 0.
 	s.Min = 0.
 	s.devsq = 0.0
 }
@@ -32,7 +33,7 @@ func (s *Summary) Add(x float64) {
 
 	s.N++
 	t := x - s.Mean
-	s.Mean += t / s.N
+	s.Mean += t / float64(s.N)
 	s.devsq += t * (x - s.Mean)
 
 }
@@ -46,7 +47,7 @@ func (s *Summary) AddValues(x []float64) {
 // Var returns the sample variance
 func (s *Summary) Var() (v float64) {
 	if s.N > 2 {
-		v = s.devsq / (s.N - 1)
+		v = s.devsq / (float64(s.N) - 1)
 	}
 	return
 }
@@ -54,7 +55,7 @@ func (s *Summary) Var() (v float64) {
 // Sd returns the sample standard deviation
 func (s *Summary) Sd() (v float64) {
 	if s.N > 2 {
-		v = math.Sqrt(s.devsq / (s.N - 1))
+		v = math.Sqrt(s.devsq / (float64(s.N) - 1))
 	}
 	return
 }
@@ -62,7 +63,7 @@ func (s *Summary) Sd() (v float64) {
 // VarP returns the population variance
 func (s *Summary) VarP() (v float64) {
 	if s.N > 1 {
-		v = s.devsq / s.N
+		v = s.devsq / float64(s.N)
 	}
 	return
 }
@@ -70,7 +71,7 @@ func (s *Summary) VarP() (v float64) {
 // SdP returns the population standard deviation
 func (s *Summary) SdP() (v float64) {
 	if s.N > 1 {
-		v = math.Sqrt(s.devsq / s.N)
+		v = math.Sqrt(s.devsq / float64(s.N))
 	}
 	return
 }
