@@ -8,6 +8,14 @@ type Summary struct {
 	Mean, N, devsq, Min, Max float64
 }
 
+func (s *Summary) Reset() {
+	s.Max = 0.0
+	s.Mean = 0.0
+	s.N = 0.
+	s.Min = 0.
+	s.devsq = 0.0
+}
+
 // Add accumulates running statistics for calculating variance and
 // standard deviation using the Welford method (1962)
 func (s *Summary) Add(x float64) {
