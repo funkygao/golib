@@ -1,0 +1,4 @@
+/*
+Readable size
+*/
+package gofmt
