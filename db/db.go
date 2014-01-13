@@ -34,7 +34,7 @@ func NewSqlDb(driver, dsn string, logger *log.Logger) *SqlDb {
 	// conn to db
 	var err error
 	this.db, err = sql.Open(this.driver, this.dsn)
-	this.checkError(err)
+	this.checkError(err, dsn)
 
 	return this
 }
@@ -52,9 +52,9 @@ func (this *SqlDb) SetMaxIdleConns(n int) {
 	this.db.SetMaxIdleConns(n)
 }
 
-func (this *SqlDb) checkError(err error) {
+func (this *SqlDb) checkError(err error, sql string) {
 	if err != nil {
-		panic(fmt.Sprintf("%s: %s", this, err.Error()))
+		panic(fmt.Sprintf("%s: %s, %s", this, err.Error(), sql))
 	}
 }
 
@@ -65,17 +65,14 @@ func (this *SqlDb) CreateDb(createTableSql string) {
 
 	var err error
 	_, err = this.db.Exec(createTableSql)
-	this.checkError(err)
+	this.checkError(err, createTableSql)
 
 	if this.driver == DRIVER_SQLITE3 {
 		// performance tuning for sqlite3
 		// http://www.sqlite.org/cvstrac/wiki?p=DatabaseIsLocked
-		_, err = this.db.Exec("PRAGMA synchronous = OFF")
-		this.checkError(err)
-		_, err = this.db.Exec("PRAGMA journal_mode = MEMORY")
-		this.checkError(err)
-		_, err = this.db.Exec("PRAGMA read_uncommitted = true")
-		this.checkError(err)
+		this.db.Exec("PRAGMA synchronous = OFF")
+		this.db.Exec("PRAGMA journal_mode = MEMORY")
+		this.db.Exec("PRAGMA read_uncommitted = true")
 	}
 }
 
@@ -85,7 +82,7 @@ func (this *SqlDb) Query(query string, args ...interface{}) *sql.Rows {
 	}
 
 	rows, err := this.db.Query(query, args...)
-	this.checkError(err)
+	this.checkError(err, query)
 
 	return rows
 }
@@ -104,10 +101,10 @@ func (this *SqlDb) ExecSql(query string, args ...interface{}) (afftectedRows int
 	}
 
 	res, err := this.db.Exec(query, args...)
-	this.checkError(err)
+	this.checkError(err, query)
 
 	afftectedRows, err = res.RowsAffected()
-	this.checkError(err)
+	this.checkError(err, query)
 
 	return
 }
@@ -118,7 +115,7 @@ func (this *SqlDb) Prepare(query string) *sql.Stmt {
 	}
 
 	r, err := this.db.Prepare(query)
-	this.checkError(err)
+	this.checkError(err, query)
 	return r
 }
 
