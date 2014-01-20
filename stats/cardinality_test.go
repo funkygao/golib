@@ -19,3 +19,13 @@ func TestCardinalityCounter(t *testing.T) {
 
 	assert.Equal(t, []string{"dau", "msg"}, c.Categories())
 }
+
+func TestMAU(t *testing.T) {
+	c := NewCardinalityCounter()
+	c.Add("RS.uid.month", 6092491)
+	c.Add("RS.uid.month", 12356497)
+	for _, k := range c.Categories() {
+		t.Logf("%s %d", k, c.Count(k))
+	}
+
+}
