@@ -1,4 +1,4 @@
-package sortmap
+package sortedmap
 
 import (
 	"testing"
