@@ -23,6 +23,13 @@ func (this *SortedMap) Get(key string) int {
 	return this.m[key]
 }
 
+func (this *SortedMap) Inc(key string) int {
+	v := this.m[key]
+	v += 1
+	this.m[key] = v
+	return v
+}
+
 func (this *SortedMap) Len() int {
 	return len(this.m)
 }
