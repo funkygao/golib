@@ -19,6 +19,10 @@ func (this *SortedMap) Set(key string, val int) {
 	this.m[key] = val
 }
 
+func (this *SortedMap) Get(key string) int {
+	return this.m[key]
+}
+
 func (this *SortedMap) Len() int {
 	return len(this.m)
 }
