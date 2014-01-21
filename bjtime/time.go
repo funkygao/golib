@@ -14,6 +14,10 @@ func TsToString(ts int) string {
 	return t.In(cnTzAjust).Format("01-02 15:04:05")
 }
 
+func TimeToString(t time.Time) string {
+	return t.In(cnTzAjust).Format("01-02 15:04:05")
+}
+
 func NowBj() time.Time {
 	return time.Now().In(cnTzAjust)
 }
