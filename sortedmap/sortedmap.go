@@ -35,7 +35,7 @@ func (this *SortedMap) Inc(key string, delta int) int {
 	defer this.Unlock()
 	v, present := this.m[key]
 	if !present {
-		return -1
+		v = 0
 	}
 	v += delta
 	this.m[key] = v

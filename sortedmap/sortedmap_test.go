@@ -20,5 +20,5 @@ func TestBasic(t *testing.T) {
 	assert.Equal(t, 37, sm.Get("foo"))
 	sm.Inc("foo", -2)
 	assert.Equal(t, 35, sm.Get("foo"))
-	assert.Equal(t, -1, sm.Inc("non-exist", 5))
+	assert.Equal(t, 5, sm.Inc("non-exist", 5))
 }
