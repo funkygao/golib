@@ -2,6 +2,7 @@ package stats
 
 import (
 	"github.com/funkygao/assert"
+	"os"
 	"testing"
 )
 
@@ -27,5 +28,16 @@ func TestMAU(t *testing.T) {
 	for _, k := range c.Categories() {
 		t.Logf("%s %d", k, c.Count(k))
 	}
+}
 
+func TestDumpAndLoad(t *testing.T) {
+	const FN = "c.gob"
+	c := NewCardinalityCounter()
+	c.Add("RS.uid.month", 6092491)
+	c.Add("RS.uid.month", 12356497)
+	c.Dump(FN)
+	d := NewCardinalityCounter()
+	d.Load(FN)
+	assert.Equal(t, uint64(2), d.Count("RS.uid.month"))
+	os.Remove(FN)
 }
