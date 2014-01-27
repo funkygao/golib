@@ -10,3 +10,9 @@ func TestUUID(t *testing.T) {
 	t.Logf("%v\n", uuid)
 	assert.Equal(t, 32, len(uuid))
 }
+
+func BenchmarkUUID(b *testing.B) {
+    for i:=0; i<b.N; i++ {
+        UUID()
+    }
+}
