@@ -13,8 +13,11 @@ func TestPriorityQueue(t *testing.T) {
 	heap.Push(pq, &Item{Value: "hello1", Priority: 1})
 	heap.Push(pq, &Item{Value: "hello8", Priority: 8})
 
+	assert.Equal(t, 3+1+8, pq.PrioritySum())
+
 	item := heap.Pop(pq)
 	assert.Equal(t, "hello8", item.(*Item).Value.(string))
+	assert.Equal(t, 3+1, pq.PrioritySum())
 
 	item = heap.Pop(pq)
 	assert.Equal(t, "hello3", item.(*Item).Value.(string))

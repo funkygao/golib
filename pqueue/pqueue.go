@@ -18,6 +18,15 @@ func New() *PriorityQueue {
 	return new(PriorityQueue)
 }
 
+func (this *PriorityQueue) PrioritySum() int {
+	sum := 0
+	for _, item := range *this {
+		sum += item.Priority
+	}
+
+	return sum
+}
+
 func (this PriorityQueue) Len() int {
 	return len(this)
 }
