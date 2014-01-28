@@ -1,4 +1,4 @@
-package pq
+package pqueue
 
 import (
 	"container/heap"
