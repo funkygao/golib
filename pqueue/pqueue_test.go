@@ -22,6 +22,5 @@ func TestPriorityQueue(t *testing.T) {
 	item = heap.Pop(pq)
 	assert.Equal(t, "hello1", item.(*Item).Value.(string))
 
-	item = heap.Pop(pq)
-	assert.Equal(t, nil, item)
+	assert.Equal(t, 0, pq.Len())
 }
