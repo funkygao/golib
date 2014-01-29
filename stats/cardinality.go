@@ -63,12 +63,13 @@ func (this *CardinalityCounter) Load(fn string) error {
 
 func (this *CardinalityCounter) Add(key string, data interface{}) (err error) {
 	if _, ok := this.Hc[key]; !ok {
-		hc := &HllCounter{StartedAt: time.Now()}
-		this.Hc[key] = hc
-		this.Hc[key].Hll, err = h.New(this.M)
+		var hll *h.HyperLogLog
+		hll, err = h.New(this.M)
 		if err != nil {
 			return
 		}
+
+		this.Hc[key] = &HllCounter{StartedAt: time.Now(), Hll: hll}
 	}
 
 	switch data.(type) {
