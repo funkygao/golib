@@ -1,4 +1,4 @@
-package golib
+package uuid
 
 import (
 	"github.com/funkygao/assert"
