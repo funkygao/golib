@@ -13,7 +13,10 @@ var (
 	conn net.Conn
 )
 
-func init() {
+func connIfNeccessary() {
+    if conn != nil {
+        return
+    }
 	var err error
 	conn, err = net.Dial("unix", SYSLOGNG_SOCK)
 	if err != nil {
@@ -23,9 +26,11 @@ func init() {
 }
 
 func Printf(format string, args ...interface{}) (n int, err error) {
+    connIfNeccessary()
 	return fmt.Fprintf(conn, format, args...)
 }
 
 func Println(args ...interface{}) (n int, err error) {
+    connIfNeccessary()
 	return fmt.Fprintln(conn, args...)
 }
