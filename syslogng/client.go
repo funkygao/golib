@@ -5,32 +5,41 @@ import (
 	"net"
 )
 
-const (
-	SYSLOGNG_SOCK = "/tmp/als.sock"
-)
-
 var (
-	conn net.Conn
+	conn     net.Conn
+	sockPath = "/tmp/als.sock"
 )
 
-func connIfNeccessary() {
-    if conn != nil {
-        return
-    }
-	var err error
-	conn, err = net.Dial("unix", SYSLOGNG_SOCK)
-	if err != nil {
-		panic(err)
+func connIfNeccessary() error {
+	if conn != nil {
+		return nil
 	}
 
+	var err error
+	conn, err = net.Dial("unix", sockPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetSocketPath(path string) {
+	sockPath = path
 }
 
 func Printf(format string, args ...interface{}) (n int, err error) {
-    connIfNeccessary()
+	err = connIfNeccessary()
+	if err != nil {
+		return 0, err
+	}
 	return fmt.Fprintf(conn, format, args...)
 }
 
 func Println(args ...interface{}) (n int, err error) {
-    connIfNeccessary()
+	err = connIfNeccessary()
+	if err != nil {
+		return 0, err
+	}
 	return fmt.Fprintln(conn, args...)
 }
