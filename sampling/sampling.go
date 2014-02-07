@@ -1,4 +1,4 @@
-package servant
+package sampling
 
 import (
 	"math/rand"
