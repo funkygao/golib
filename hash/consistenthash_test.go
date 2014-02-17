@@ -68,3 +68,12 @@ func TestConsistency(t *testing.T) {
 	}
 
 }
+
+func TestServerClusterPicker(t *testing.T) {
+	h := New(2, nil)
+	h.Add("192.168.0.1", "192.168.0.2")
+	t.Logf("map %+v", h.hashMap)
+	t.Logf("keys %+v", h.keys)
+	t.Logf("authorative server for {uid:1} is: %s", h.Get("uid:1"))
+	t.Logf("authorative server for {uid:8} is: %s", h.Get("uid:8"))
+}
