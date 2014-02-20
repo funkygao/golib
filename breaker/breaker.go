@@ -62,6 +62,7 @@ type Consecutive struct {
 	// RetryTimeout is added to the time when the circuit first opens to determine
 	// the next time the decorating operation will be allowed to occur.
 	RetryTimeout time.Duration
+
 	// FailureAllowance is the maximum consecutive failures that may occur before
 	// the circuit will open.
 	FailureAllowance uint
