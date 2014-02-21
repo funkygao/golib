@@ -42,8 +42,11 @@ func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 	}
 }
 
-func IgnoreSignal(sig os.Signal) {
-	RegisterSignalHandler(sig, func(s os.Signal) {})
+func IgnoreSignal(sig ...os.Signal) {
+	ignoreFunc := func(s os.Signal) {}
+	for _, s := range sig {
+		RegisterSignalHandler(s, ignoreFunc)
+	}
 }
 
 // Send a signal to current running proc
