@@ -63,15 +63,16 @@ func (this *ResourcePool) IsClosed() (closed bool) {
 }
 
 // Get will return the next available resource. If capacity
-// has not been reached, it will create a new one using the factory. Otherwise,
-// it will indefinitely wait till the next resource becomes available.
+// has not been reached, it will create a new one using the factory.
+// Otherwise, it will indefinitely wait till the next resource becomes available.
 func (this *ResourcePool) Get() (resource Resource, err error) {
 	return this.get(true)
 }
 
-// TryGet will return the next available resource. If none is available, and capacity
-// has not been reached, it will create a new one using the factory. Otherwise,
-// it will return nil with no error.
+// TryGet will return the next available resource.
+// If none is available, and capacity has not been reached, it
+// will create a new one using the factory.
+// Otherwise, it will return nil with no error.
 func (this *ResourcePool) TryGet() (resource Resource, err error) {
 	return this.get(false)
 }
@@ -102,7 +103,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 
 	// Unwrap
 	timeout := this.idleTimeout.Get()
-	if wrapper.resource != nil && timeout > 0 && wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
+	if wrapper.resource != nil && timeout > 0 &&
+		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
 		wrapper.resource.Close()
 		wrapper.resource = nil
 	}
