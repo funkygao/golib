@@ -25,86 +25,92 @@ type resourceWrapper struct {
 
 // NewResourcePool creates a new ResourcePool pool.
 // capacity is the initial capacity of the pool.
-// maxCap is the maximum capacity.
+// maxCap is the maximum capacity of the pool.
 // If a resource is unused beyond idleTimeout, it's discarded.
 // An idleTimeout of 0 means that there is no timeout.
 func NewResourcePool(factory Factory, capacity, maxCap int,
 	idleTimeout time.Duration) *ResourcePool {
 	if capacity <= 0 || maxCap <= 0 || capacity > maxCap {
-		panic(fmt.Errorf("Invalid/out of range capacity"))
+		panic("Invalid/out of range capacity")
 	}
-	rp := &ResourcePool{
+
+	this := &ResourcePool{
 		resources:   make(chan resourceWrapper, maxCap),
 		factory:     factory,
 		capacity:    sync2.AtomicInt64(capacity),
 		idleTimeout: sync2.AtomicDuration(idleTimeout),
 	}
+
+	//
 	for i := 0; i < capacity; i++ {
-		rp.resources <- resourceWrapper{}
+		this.resources <- resourceWrapper{}
 	}
-	return rp
+	return this
 }
 
 // Close empties the pool calling Close on all its resources.
 // You can call Close while there are outstanding resources.
 // It waits for all resources to be returned (Put).
 // After a Close, Get and TryGet are not allowed.
-func (rp *ResourcePool) Close() {
-	rp.SetCapacity(0)
+func (this *ResourcePool) Close() {
+	this.SetCapacity(0)
 }
 
-func (rp *ResourcePool) IsClosed() (closed bool) {
-	if rp == nil {
+func (this *ResourcePool) IsClosed() (closed bool) {
+	if this == nil {
 		return true
 	}
-	return rp.capacity.Get() == 0
+	return this.capacity.Get() == 0
 }
 
 // Get will return the next available resource. If capacity
 // has not been reached, it will create a new one using the factory. Otherwise,
 // it will indefinitely wait till the next resource becomes available.
-func (rp *ResourcePool) Get() (resource Resource, err error) {
-	return rp.get(true)
+func (this *ResourcePool) Get() (resource Resource, err error) {
+	return this.get(true)
 }
 
 // TryGet will return the next available resource. If none is available, and capacity
 // has not been reached, it will create a new one using the factory. Otherwise,
 // it will return nil with no error.
-func (rp *ResourcePool) TryGet() (resource Resource, err error) {
-	return rp.get(false)
+func (this *ResourcePool) TryGet() (resource Resource, err error) {
+	return this.get(false)
 }
 
-func (rp *ResourcePool) get(wait bool) (resource Resource, err error) {
-	if rp == nil {
+func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
+	if this == nil {
 		return nil, CLOSED_ERR
 	}
-	// Fetch
-	var wrapper resourceWrapper
-	var ok bool
+
+	var (
+		wrapper resourceWrapper
+		ok      bool
+	)
 	select {
-	case wrapper, ok = <-rp.resources:
+	case wrapper, ok = <-this.resources:
 	default:
 		if !wait {
 			return nil, nil
 		}
 		startTime := time.Now()
-		wrapper, ok = <-rp.resources
-		rp.recordWait(startTime)
+		wrapper, ok = <-this.resources
+		this.recordWait(startTime)
 	}
+
 	if !ok {
 		return nil, CLOSED_ERR
 	}
 
 	// Unwrap
-	timeout := rp.idleTimeout.Get()
+	timeout := this.idleTimeout.Get()
 	if wrapper.resource != nil && timeout > 0 && wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
 		wrapper.resource.Close()
 		wrapper.resource = nil
 	}
 	if wrapper.resource == nil {
-		wrapper.resource, err = rp.factory()
+		wrapper.resource, err = this.factory()
 		if err != nil {
-			rp.resources <- resourceWrapper{}
+			this.resources <- resourceWrapper{}
 		}
 	}
 	return wrapper.resource, err
@@ -114,8 +120,8 @@ func (rp *ResourcePool) get(wait bool) (resource Resource, err error) {
 // a corresponding Put is required. If you no longer need a resource,
 // you will need to call Put(nil) instead of returning the closed resource.
 // The will eventually cause a new resource to be created in its place.
-func (rp *ResourcePool) Put(resource Resource) {
-	if rp == nil {
+func (this *ResourcePool) Put(resource Resource) {
+	if this == nil {
 		panic(CLOSED_ERR)
 	}
 	var wrapper resourceWrapper
@@ -123,9 +129,9 @@ func (rp *ResourcePool) Put(resource Resource) {
 		wrapper = resourceWrapper{resource, time.Now()}
 	}
 	select {
-	case rp.resources <- wrapper:
+	case this.resources <- wrapper:
 	default:
-		panic(fmt.Errorf("Attempt to Put into a full ResourcePool"))
+		panic("Attempt to Put into a full ResourcePool")
 	}
 }
 
@@ -135,8 +141,8 @@ func (rp *ResourcePool) Put(resource Resource) {
 // to be shrunk, SetCapacity waits till the necessary
 // number of resources are returned to the pool.
 // A SetCapacity of 0 is equivalent to closing the ResourcePool.
-func (rp *ResourcePool) SetCapacity(capacity int) error {
-	if rp == nil || capacity < 0 || capacity > cap(rp.resources) {
+func (this *ResourcePool) SetCapacity(capacity int) error {
+	if this == nil || capacity < 0 || capacity > cap(this.resources) {
 		return fmt.Errorf("capacity %d is out of range", capacity)
 	}
 
@@ -144,98 +150,86 @@ func (rp *ResourcePool) SetCapacity(capacity int) error {
 	// if old capacity is non-zero.
 	var oldcap int
 	for {
-		oldcap = int(rp.capacity.Get())
+		oldcap = int(this.capacity.Get())
 		if oldcap == 0 {
 			return CLOSED_ERR
 		}
 		if oldcap == capacity {
 			return nil
 		}
-		if rp.capacity.CompareAndSwap(int64(oldcap), int64(capacity)) {
+		if this.capacity.CompareAndSwap(int64(oldcap), int64(capacity)) {
 			break
 		}
 	}
 
 	if capacity < oldcap {
 		for i := 0; i < oldcap-capacity; i++ {
-			wrapper := <-rp.resources
+			wrapper := <-this.resources
 			if wrapper.resource != nil {
 				wrapper.resource.Close()
 			}
 		}
 	} else {
 		for i := 0; i < capacity-oldcap; i++ {
-			rp.resources <- resourceWrapper{}
+			this.resources <- resourceWrapper{}
 		}
 	}
 	if capacity == 0 {
-		close(rp.resources)
+		close(this.resources)
 	}
 	return nil
 }
 
-func (rp *ResourcePool) recordWait(start time.Time) {
-	rp.waitCount.Add(1)
-	rp.waitTime.Add(time.Now().Sub(start))
+func (this *ResourcePool) recordWait(start time.Time) {
+	this.waitCount.Add(1)
+	this.waitTime.Add(time.Now().Sub(start))
 }
 
-func (rp *ResourcePool) SetIdleTimeout(idleTimeout time.Duration) {
-	if rp == nil {
+func (this *ResourcePool) IdleTimeout() time.Duration {
+	if this == nil {
+		return 0
+	}
+	return this.idleTimeout.Get()
+}
+
+func (this *ResourcePool) SetIdleTimeout(idleTimeout time.Duration) {
+	if this == nil {
 		return
 	}
-	rp.idleTimeout.Set(idleTimeout)
+	this.idleTimeout.Set(idleTimeout)
 }
 
-func (rp *ResourcePool) StatsJSON() string {
-	if rp == nil {
-		return "{}"
-	}
-	c, a, mx, wc, wt, it := rp.Stats()
-	return fmt.Sprintf(`{"Capacity": %v, "Available": %v, "MaxCapacity": %v, "WaitCount": %v, "WaitTime": %v, "IdleTimeout": %v}`, c, a, mx, wc, int64(wt), int64(it))
-}
-
-func (rp *ResourcePool) Stats() (capacity, available, maxCap, waitCount int64, waitTime, idleTimeout time.Duration) {
-	return rp.Capacity(), rp.Available(), rp.MaxCap(), rp.WaitCount(), rp.WaitTime(), rp.IdleTimeout()
-}
-
-func (rp *ResourcePool) Capacity() int64 {
-	if rp == nil {
+func (this *ResourcePool) Capacity() int64 {
+	if this == nil {
 		return 0
 	}
-	return rp.capacity.Get()
+	return this.capacity.Get()
 }
 
-func (rp *ResourcePool) Available() int64 {
-	if rp == nil {
+func (this *ResourcePool) MaxCapacity() int64 {
+	if this == nil {
 		return 0
 	}
-	return int64(len(rp.resources))
+	return int64(cap(this.resources))
 }
 
-func (rp *ResourcePool) MaxCap() int64 {
-	if rp == nil {
+func (this *ResourcePool) Available() int64 {
+	if this == nil {
 		return 0
 	}
-	return int64(cap(rp.resources))
+	return int64(len(this.resources))
 }
 
-func (rp *ResourcePool) WaitCount() int64 {
-	if rp == nil {
+func (this *ResourcePool) WaitCount() int64 {
+	if this == nil {
 		return 0
 	}
-	return rp.waitCount.Get()
+	return this.waitCount.Get()
 }
 
-func (rp *ResourcePool) WaitTime() time.Duration {
-	if rp == nil {
+func (this *ResourcePool) WaitTime() time.Duration {
+	if this == nil {
 		return 0
 	}
-	return rp.waitTime.Get()
-}
-
-func (rp *ResourcePool) IdleTimeout() time.Duration {
-	if rp == nil {
-		return 0
-	}
-	return rp.idleTimeout.Get()
+	return this.waitTime.Get()
 }

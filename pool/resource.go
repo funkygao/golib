@@ -4,8 +4,6 @@ package pool
 type Factory func() (Resource, error)
 
 // Every resource needs to suport the Resource interface.
-// Thread synchronization between Close() and IsClosed()
-// is the responsibility the caller.
 type Resource interface {
 	Close()
 }
