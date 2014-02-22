@@ -8,10 +8,10 @@ import (
 
 // ResourcePool allows you to use a pool of resources.
 type ResourcePool struct {
-	resources   chan resourceWrapper
-	factory     Factory
-	capacity    sync2.AtomicInt64
-	idleTimeout sync2.AtomicDuration
+	resourcePool chan resourceWrapper
+	factory      Factory
+	capacity     sync2.AtomicInt64
+	idleTimeout  sync2.AtomicDuration
 
 	// stats
 	waitCount sync2.AtomicInt64
@@ -35,15 +35,14 @@ func NewResourcePool(factory Factory, capacity, maxCap int,
 	}
 
 	this := &ResourcePool{
-		resources:   make(chan resourceWrapper, maxCap),
-		factory:     factory,
-		capacity:    sync2.AtomicInt64(capacity),
-		idleTimeout: sync2.AtomicDuration(idleTimeout),
+		resourcePool: make(chan resourceWrapper, maxCap),
+		factory:      factory,
+		capacity:     sync2.AtomicInt64(capacity),
+		idleTimeout:  sync2.AtomicDuration(idleTimeout),
 	}
 
-	//
 	for i := 0; i < capacity; i++ {
-		this.resources <- resourceWrapper{}
+		this.resourcePool <- resourceWrapper{}
 	}
 	return this
 }
@@ -87,13 +86,13 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		ok      bool
 	)
 	select {
-	case wrapper, ok = <-this.resources:
+	case wrapper, ok = <-this.resourcePool:
 	default:
 		if !wait {
 			return nil, nil
 		}
 		startTime := time.Now()
-		wrapper, ok = <-this.resources
+		wrapper, ok = <-this.resourcePool
 		this.recordWait(startTime)
 	}
 
@@ -110,7 +109,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	if wrapper.resource == nil {
 		wrapper.resource, err = this.factory()
 		if err != nil {
-			this.resources <- resourceWrapper{}
+			this.resourcePool <- resourceWrapper{}
 		}
 	}
 	return wrapper.resource, err
@@ -129,7 +128,7 @@ func (this *ResourcePool) Put(resource Resource) {
 		wrapper = resourceWrapper{resource, time.Now()}
 	}
 	select {
-	case this.resources <- wrapper:
+	case this.resourcePool <- wrapper:
 	default:
 		panic("Attempt to Put into a full ResourcePool")
 	}
@@ -142,7 +141,7 @@ func (this *ResourcePool) Put(resource Resource) {
 // number of resources are returned to the pool.
 // A SetCapacity of 0 is equivalent to closing the ResourcePool.
 func (this *ResourcePool) SetCapacity(capacity int) error {
-	if this == nil || capacity < 0 || capacity > cap(this.resources) {
+	if this == nil || capacity < 0 || capacity > cap(this.resourcePool) {
 		return fmt.Errorf("capacity %d is out of range", capacity)
 	}
 
@@ -164,18 +163,18 @@ func (this *ResourcePool) SetCapacity(capacity int) error {
 
 	if capacity < oldcap {
 		for i := 0; i < oldcap-capacity; i++ {
-			wrapper := <-this.resources
+			wrapper := <-this.resourcePool
 			if wrapper.resource != nil {
 				wrapper.resource.Close()
 			}
 		}
 	} else {
 		for i := 0; i < capacity-oldcap; i++ {
-			this.resources <- resourceWrapper{}
+			this.resourcePool <- resourceWrapper{}
 		}
 	}
 	if capacity == 0 {
-		close(this.resources)
+		close(this.resourcePool)
 	}
 	return nil
 }
@@ -210,14 +209,14 @@ func (this *ResourcePool) MaxCapacity() int64 {
 	if this == nil {
 		return 0
 	}
-	return int64(cap(this.resources))
+	return int64(cap(this.resourcePool))
 }
 
 func (this *ResourcePool) Available() int64 {
 	if this == nil {
 		return 0
 	}
-	return int64(len(this.resources))
+	return int64(len(this.resourcePool))
 }
 
 func (this *ResourcePool) WaitCount() int64 {
