@@ -7,3 +7,9 @@ type Factory func() (Resource, error)
 type Resource interface {
 	Close()
 }
+
+// For those resource that wants keepalive feature, it will
+// implement Keepalive interface.
+type Keepalive interface {
+	Keepalive()
+}
