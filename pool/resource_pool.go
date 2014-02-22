@@ -101,7 +101,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		return nil, CLOSED_ERR
 	}
 
-	// Unwrap
+	// Close the aged idle resource
 	timeout := this.idleTimeout.Get()
 	if wrapper.resource != nil && timeout > 0 &&
 		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
@@ -114,6 +114,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 			this.resourcePool <- resourceWrapper{}
 		}
 	}
+
 	return wrapper.resource, err
 }
 
@@ -125,6 +126,7 @@ func (this *ResourcePool) Put(resource Resource) {
 	if this == nil {
 		panic(CLOSED_ERR)
 	}
+
 	var wrapper resourceWrapper
 	if resource != nil {
 		wrapper = resourceWrapper{resource, time.Now()}
@@ -132,6 +134,7 @@ func (this *ResourcePool) Put(resource Resource) {
 	select {
 	case this.resourcePool <- wrapper:
 	default:
+		// TODO panic?
 		panic("Attempt to Put into a full ResourcePool")
 	}
 }
@@ -175,6 +178,7 @@ func (this *ResourcePool) SetCapacity(capacity int) error {
 			this.resourcePool <- resourceWrapper{}
 		}
 	}
+
 	if capacity == 0 {
 		close(this.resourcePool)
 	}
