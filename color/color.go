@@ -1,15 +1,21 @@
 package color
 
+import (
+	"bytes"
+)
+
 // Convert a string to string with color escape info that can output to console
-func Colorize(colors []string, str string) string {
-	buf.Reset()
+func Colorize(colors []string, str string) (s string) {
+	buf := (<-getter).(*bytes.Buffer)
 	for _, color := range colors {
 		buf.WriteString(color_table[color])
 	}
 
 	buf.WriteString(str)
 	buf.WriteString(color_table[colorReset])
-	return buf.String()
+	s = buf.String()
+	putter <- buf
+	return
 }
 
 func Blue(str string) string {
