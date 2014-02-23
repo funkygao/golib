@@ -10,7 +10,7 @@ const (
 )
 
 var (
-	getter, putter chan interface{}
+	bufGetter, bufPutter chan interface{}
 
 	color_table = map[string]string{
 		// e,g. FgBlack + Blink + BgGreen + "hello" + Reset
@@ -44,7 +44,7 @@ var (
 )
 
 func init() {
-	getter, putter = recycler.New(10, func() interface{} {
+	bufGetter, bufPutter = recycler.New(10, func() interface{} {
 		return new(bytes.Buffer)
 	})
 }
