@@ -1,10 +1,16 @@
 package color
 
+import (
+	"bytes"
+)
+
 const (
 	colorReset = "Reset"
 )
 
 var (
+	buf = new(bytes.Buffer)
+
 	color_table = map[string]string{
 		// e,g. FgBlack + Blink + BgGreen + "hello" + Reset
 		"Reset": "\x1b[0m",
