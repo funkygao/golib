@@ -15,18 +15,8 @@ type Arena struct {
 	slabClasses  []slabClass
 	slabMagic    int32
 	slabSize     int
+	stats        arenaStats
 	malloc       func(size int) []byte
-
-	// stats
-	numAllocs         int64
-	numAddRefs        int64
-	numDecRefs        int64
-	numGetNexts       int64
-	numSetNexts       int64
-	numMallocs        int64
-	numMallocErrs     int64
-	numTooBigErrs     int64
-	numNoChunkMemErrs int64
 }
 
 func NewArena(startChunkSize int, slabSize int, growthFactor float64,
@@ -47,21 +37,21 @@ func NewArena(startChunkSize int, slabSize int, growthFactor float64,
 }
 
 func (this *Arena) Alloc(size int) (buf []byte) {
-	this.numAllocs++
+	this.stats.numAllocs++
 	if size > this.slabSize {
-		this.numTooBigErrs++
+		this.stats.numTooBigErrs++
 		return nil
 	}
 	chunkMem := this.assignChunkMem(this.findSlabClassIndex(size))
 	if chunkMem == nil {
-		this.numNoChunkMemErrs++
+		this.stats.numNoChunkMemErrs++
 		return nil
 	}
 	return chunkMem[0:size]
 }
 
 func (this *Arena) AddRef(buf []byte) {
-	this.numAddRefs++
+	this.stats.numAddRefs++
 	slab, chunk := this.bufContainer(buf)
 	if slab == nil || chunk == nil {
 		panic(ErrOutsideArena)
@@ -70,7 +60,7 @@ func (this *Arena) AddRef(buf []byte) {
 }
 
 func (this *Arena) DecRef(buf []byte) bool {
-	this.numDecRefs++
+	this.stats.numDecRefs++
 	slab, chunk := this.bufContainer(buf)
 	if slab == nil || chunk == nil {
 		panic(ErrOutsideArena)
@@ -84,7 +74,7 @@ func (this *Arena) Owns(buf []byte) bool {
 }
 
 func (this *Arena) GetNext(buf []byte) (next []byte) {
-	this.numGetNexts++
+	this.stats.numGetNexts++
 	slab, chunk := this.bufContainer(buf)
 	if slab == nil || chunk == nil {
 		panic(ErrOutsideArena)
@@ -142,10 +132,10 @@ func (this *Arena) addSlab(slabClassIndex, slabSize int, slabMagic int32) bool {
 	}
 	slabIndex := len(slabClass.slabs)
 	memorySize := (slabClass.chunkSize * chunksPerSlab) + SLAB_MEMORY_FOOTER_LEN
-	this.numMallocs++
+	this.stats.numMallocs++
 	memory := this.malloc(memorySize)
 	if memory == nil {
-		this.numMallocErrs++
+		this.stats.numMallocErrs++
 		return false
 	}
 
