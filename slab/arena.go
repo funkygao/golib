@@ -130,20 +130,22 @@ func (this *Arena) SetNext(buf, bufNext []byte) {
 }
 
 func (this *Arena) addSlabClass(chunkSize int) {
+	debug("before addSlabClass: %# v", *this)
 	this.slabClasses = append(this.slabClasses,
 		slabClass{
 			chunkSize: chunkSize,
 			chunkFree: emptyChunkLoc,
 		})
+	debug("after addSlabClass: %# v", *this)
 }
 
 func (this *Arena) findSlabClassIndex(bufSize int) int {
+	// binary search
 	idx := sort.Search(len(this.slabClasses), func(i int) bool {
 		return bufSize <= this.slabClasses[i].chunkSize
 	})
 	if idx >= len(this.slabClasses) {
-		// Didn't find matching from current slabClasses
-		// So, create it now
+		// Will be at tail of my slabClasses
 		tailSlabClass := &(this.slabClasses[len(this.slabClasses)-1])
 		nextChunkSize := float64(tailSlabClass.chunkSize) * this.growthFactor
 		this.addSlabClass(int(math.Ceil(nextChunkSize)))
