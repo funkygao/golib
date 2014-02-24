@@ -12,9 +12,9 @@ type chunkLoc struct {
 }
 
 type chunk struct {
-	refs int32
-	self chunkLoc
-	next chunkLoc
+	refs int32    // Reference count.
+	self chunkLoc // The chunkLoc for this chunk.
+	next chunkLoc // Used when the chunk is in the free-list or when chained.
 }
 
 func (this *chunkLoc) isEmpty() bool {

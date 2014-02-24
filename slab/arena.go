@@ -10,13 +10,25 @@ import (
 
 type Malloc func(size int) []byte
 
+// Arena tracks one or more slabClass structs.
+//
+// Each slabClass manages a different chunkSize, where it's computed
+// using growth factor.
+// Each slabClass also tracks 0 or more slabs, where every slab
+// tracked by a slabClass will have the same chunkSize.
+//
+// A slab manages a large continguous array of memory bytes, and the slab's
+// memory is subdivided many fixed-sized chunks of the same chunkSize.
+// All the chunks in a new slab are placed on a free-list that's part of
+// the slabClass.
 type Arena struct {
-	growthFactor float64
-	slabClasses  []slabClass
-	slabMagic    int32
-	slabSize     int
+	growthFactor float64     // Should > 1.0.
+	slabClasses  []slabClass // The chunkSizes of slabClasses grows by growthFactor.
+	slabMagic    int32       // Magic number at the end of each slab memory []byte.
+	slabSize     int         // ? TODO
 	stats        arenaStats
-	malloc       func(size int) []byte
+
+	malloc func(size int) []byte
 }
 
 func NewArena(startChunkSize int, slabSize int, growthFactor float64,
@@ -36,18 +48,20 @@ func NewArena(startChunkSize int, slabSize int, growthFactor float64,
 	return
 }
 
-func (this *Arena) Alloc(size int) (buf []byte) {
+// The first 'large enough' slabClass is found and a chunk from the
+// free-list is taken to service the allocation.
+func (this *Arena) Alloc(bufSize int) (buf []byte, err error) {
 	this.stats.numAllocs++
-	if size > this.slabSize {
+	if bufSize > this.slabSize {
 		this.stats.numTooBigErrs++
-		return nil
+		return nil, ErrTooBig
 	}
-	chunkMem := this.assignChunkMem(this.findSlabClassIndex(size))
+	chunkMem := this.assignChunkMem(this.findSlabClassIndex(bufSize))
 	if chunkMem == nil {
 		this.stats.numNoChunkMemErrs++
-		return nil
+		return nil, ErrNoChunkMem
 	}
-	return chunkMem[0:size]
+	return chunkMem[0:bufSize], nil
 }
 
 func (this *Arena) AddRef(buf []byte) {
@@ -102,16 +116,18 @@ func (this *Arena) addSlabClass(chunkSize int) {
 }
 
 func (this *Arena) findSlabClassIndex(bufSize int) int {
-	i := sort.Search(len(this.slabClasses), func(i int) bool {
+	idx := sort.Search(len(this.slabClasses), func(i int) bool {
 		return bufSize <= this.slabClasses[i].chunkSize
 	})
-	if i >= len(this.slabClasses) {
-		slabClass := &(this.slabClasses[len(this.slabClasses)-1])
-		nextChunkSize := float64(slabClass.chunkSize) * this.growthFactor
+	if idx >= len(this.slabClasses) {
+		// Didn't find matching from current slabClasses
+		// So, create it now
+		tailSlabClass := &(this.slabClasses[len(this.slabClasses)-1])
+		nextChunkSize := float64(tailSlabClass.chunkSize) * this.growthFactor
 		this.addSlabClass(int(math.Ceil(nextChunkSize)))
 		return this.findSlabClassIndex(bufSize)
 	}
-	return i
+	return idx
 }
 
 func (this *Arena) assignChunkMem(slabClassIndex int) (chunkMem []byte) {

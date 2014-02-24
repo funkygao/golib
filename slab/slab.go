@@ -1,17 +1,17 @@
 package slab
 
 type slabClass struct {
-	slabs     []*slab
-	chunkSize int
-	chunkFree chunkLoc
+	slabs     []*slab  // A growing array of slabs.
+	chunkSize int      // Each slab is sliced into fixed-sized chunks.
+	chunkFree chunkLoc // Chunks are tracked in a free-list per slabClass.
 
 	numChunks     int64
 	numChunksFree int64
 }
 
 type slab struct {
-	memory []byte
-	chunks []chunk
+	memory []byte  // len(memory) == slabSize + SLAB_MEMORY_FOOTER_LEN.
+	chunks []chunk // Parallel array of chunk metadata.
 }
 
 func (this *slabClass) pushFreeChunk(c *chunk) {

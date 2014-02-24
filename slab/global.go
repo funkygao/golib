@@ -6,7 +6,7 @@ const (
 )
 
 var (
-	emptyChunkLoc = chunkLoc{-1, -1, -1, -1}
+	emptyChunkLoc = chunkLoc{-1, -1, -1, -1} // A sentinel.
 )
 
 func defaultMalloc(size int) []byte {
