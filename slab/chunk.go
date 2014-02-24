@@ -18,14 +18,16 @@ type chunk struct {
 }
 
 func (this *chunkLoc) isEmpty() bool {
-	return this.slabClassIndex == -1 && this.slabIndex == -1 &&
-		this.chunkSize == -1 && this.chunkIndex == -1
+	return this.slabClassIndex == emptyChunkLoc.slabClassIndex &&
+		this.slabIndex == emptyChunkLoc.slabIndex &&
+		this.chunkSize == emptyChunkLoc.chunkSize &&
+		this.chunkIndex == emptyChunkLoc.chunkIndex
 }
 
 func (this *chunk) addRef() *chunk {
 	this.refs++
 	if this.refs <= 1 {
-		panic(fmt.Sprintf("unexpected ref-count during addRef: %#v", this))
+		panic(fmt.Sprintf("unexpected ref-count during addRef: %#v", *this))
 	}
 	return this
 }

@@ -38,6 +38,7 @@ func (this *slabClass) popFreeChunk() *chunk {
 	if this.numChunksFree < 0 {
 		panic("shit")
 	}
+	debug("%# v", *c)
 	return c
 }
 

@@ -25,7 +25,7 @@ type Arena struct {
 	growthFactor float64     // Should > 1.0.
 	slabClasses  []slabClass // The chunkSizes of slabClasses grows by growthFactor.
 	slabMagic    int32       // Magic number at the end of each slab memory []byte.
-	slabSize     int         // ? TODO
+	slabSize     int         // Each slabClass memory totals this size in bytes.
 	stats        arenaStats
 
 	malloc func(size int) []byte
@@ -61,6 +61,7 @@ func (this *Arena) Alloc(bufSize int) (buf []byte, err error) {
 		this.stats.numNoChunkMemErrs++
 		return nil, ErrNoChunkMem
 	}
+	debug("%# v", chunkMem)
 	return chunkMem[0:bufSize], nil
 }
 
@@ -151,12 +152,14 @@ func (this *Arena) findSlabClassIndex(bufSize int) int {
 		this.addSlabClass(int(math.Ceil(nextChunkSize)))
 		return this.findSlabClassIndex(bufSize)
 	}
+	debug("findSlabClassIndex for %d: %d", bufSize, idx)
 	return idx
 }
 
 func (this *Arena) assignChunkMem(slabClassIndex int) (chunkMem []byte) {
-	slabClass := &(this.slabClasses[slabClassIndex])
+	slabClass := &this.slabClasses[slabClassIndex]
 	if slabClass.chunkFree.isEmpty() {
+		debug("chunkFree empty :%# v", *slabClass)
 		if !this.addSlab(slabClassIndex, this.slabSize, this.slabMagic) {
 			return nil
 		}
@@ -167,6 +170,7 @@ func (this *Arena) assignChunkMem(slabClassIndex int) (chunkMem []byte) {
 func (this *Arena) addSlab(slabClassIndex, slabSize int, slabMagic int32) bool {
 	slabClass := &(this.slabClasses[slabClassIndex])
 	chunksPerSlab := slabSize / slabClass.chunkSize
+	debug("chunkPerSlab for class:%d: %d", slabClassIndex, chunksPerSlab)
 	if chunksPerSlab <= 0 {
 		chunksPerSlab = 1
 	}
@@ -197,6 +201,7 @@ func (this *Arena) addSlab(slabClassIndex, slabSize int, slabMagic int32) bool {
 		slabClass.pushFreeChunk(c)
 	}
 	slabClass.numChunks += int64(len(slab.chunks))
+	debug("%# v", *this)
 	return true
 }
 
@@ -219,9 +224,11 @@ func (this *Arena) bufContainer(buf []byte) (*slabClass, *chunk) {
 	if buf == nil || cap(buf) <= SLAB_MEMORY_FOOTER_LEN {
 		return nil, nil
 	}
+	debug("buf: %# v", buf)
 	rest := buf[:cap(buf)]
 	footerDistance := len(rest) - SLAB_MEMORY_FOOTER_LEN
 	footer := rest[footerDistance:]
+	debug("rest: %# v, footer: %# v", rest, footer)
 	slabClassIndex := binary.BigEndian.Uint32(footer[0:4])
 	slabIndex := binary.BigEndian.Uint32(footer[4:8])
 	slabMagic := binary.BigEndian.Uint32(footer[8:12])
