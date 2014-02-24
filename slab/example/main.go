@@ -12,4 +12,5 @@ func main() {
 	fmt.Println("2")
 	arena.Alloc(131)
 	arena.AddRef(buf)
+	fmt.Printf("got the buf: len=%d, cap=%d raw=%#v\n", len(buf), cap(buf), buf)
 }
