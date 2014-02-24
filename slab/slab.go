@@ -25,18 +25,18 @@ func (this *slabClass) pushFreeChunk(c *chunk) {
 
 func (this *slabClass) popFreeChunk() *chunk {
 	if this.chunkFree.isEmpty() {
-		panic()
+		panic("Empty chunkFree")
 	}
 	c := this.chunk(this.chunkFree)
 	if c.refs != 0 {
-		panic()
+		panic("Unexpected ref")
 	}
 	c.refs = 1
 	this.chunkFree = c.next
 	c.next = emptyChunkLoc
 	this.numChunksFree--
 	if this.numChunksFree < 0 {
-		panic()
+		panic("shit")
 	}
 	return c
 }
