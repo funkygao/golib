@@ -66,7 +66,7 @@ func (this *Arena) AddRef(buf []byte) {
 	if slab == nil || chunk == nil {
 		panic(ErrOutsideArena)
 	}
-	c.addRef()
+	chunk.addRef()
 }
 
 func (this *Arena) DecRef(buf []byte) bool {
@@ -153,11 +153,11 @@ func (this *Arena) addSlab(slabClassIndex, slabSize int, slabMagic int32) bool {
 		memory: memory,
 		chunks: make([]chunk, chunksPerSlab),
 	}
-	footer := slab.memory[len(slab.memory)-SLAB_MEMORY_FOOTER_LEN]
+	footer := slab.memory[len(slab.memory)-SLAB_MEMORY_FOOTER_LEN:]
 	binary.BigEndian.PutUint32(footer[0:4], uint32(slabClassIndex))
 	binary.BigEndian.PutUint32(footer[4:8], uint32(slabIndex))
 	binary.BigEndian.PutUint32(footer[8:12], uint32(slabMagic))
-	slabClass.slabs = append(slabClass, slab)
+	slabClass.slabs = append(slabClass.slabs, slab)
 	for i := 0; i < len(slab.chunks); i++ {
 		c := &(slab.chunks[i])
 		c.self.slabClassIndex = slabClassIndex
@@ -212,7 +212,7 @@ func (this *Arena) decRef(sc *slabClass, c *chunk) bool {
 	if c.refs == 0 {
 		scNext, cNext := this.chunk(c.next)
 		if scNext != nil && cNext != nil {
-			this.decRef(scNext, c.next)
+			this.decRef(scNext, cNext)
 		}
 		c.next = emptyChunkLoc
 		sc.pushFreeChunk(c)

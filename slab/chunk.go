@@ -25,6 +25,7 @@ func (this *chunkLoc) isEmpty() bool {
 func (this *chunk) addRef() *chunk {
 	this.refs++
 	if this.refs <= 1 {
-		panic(fmt.Sprintf("unexpected ref-count during addRef: %#v", c))
+		panic(fmt.Sprintf("unexpected ref-count during addRef: %#v", this))
 	}
+	return this
 }
