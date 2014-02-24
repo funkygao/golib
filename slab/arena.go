@@ -105,14 +105,36 @@ func (this *Arena) GetNext(buf []byte) (next []byte) {
 }
 
 func (this *Arena) SetNext(buf, bufNext []byte) {
-
+	this.stats.numSetNexts++
+	sc, c := this.bufContainer(buf)
+	if sc == nil || c == nil {
+		panic("buf not from this arena")
+	}
+	if c.refs <= 0 {
+		panic("unexpected ref-count")
+	}
+	scOldNext, cOldNext := this.chunk(c.next)
+	if scOldNext != nil && cOldNext != nil {
+		this.decRef(scOldNext, cOldNext)
+	}
+	c.next = emptyChunkLoc
+	if bufNext != nil {
+		scNewNext, cNewNext := this.bufContainer(bufNext)
+		if scNewNext == nil || cNewNext == nil {
+			panic("bufNext not from this arena")
+		}
+		cNewNext.addRef()
+		c.next = cNewNext.self
+		c.next.chunkSize = len(bufNext)
+	}
 }
 
 func (this *Arena) addSlabClass(chunkSize int) {
-	this.slabClasses = append(this.slabClasses, slabClass{
-		chunkSize: chunkSize,
-		chunkFree: emptyChunkLoc,
-	})
+	this.slabClasses = append(this.slabClasses,
+		slabClass{
+			chunkSize: chunkSize,
+			chunkFree: emptyChunkLoc,
+		})
 }
 
 func (this *Arena) findSlabClassIndex(bufSize int) int {
