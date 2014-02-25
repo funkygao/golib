@@ -6,7 +6,7 @@ import (
 
 // Convert a string to string with color escape info that can output to console
 func Colorize(colors []string, str string) (s string) {
-	buf := (<-bufGetter).(*bytes.Buffer)
+	buf := new(bytes.Buffer)
 	for _, color := range colors {
 		buf.WriteString(color_table[color])
 	}
@@ -14,7 +14,6 @@ func Colorize(colors []string, str string) (s string) {
 	buf.WriteString(str)
 	buf.WriteString(color_table[colorReset])
 	s = buf.String()
-	bufPutter <- buf
 	return
 }
 
