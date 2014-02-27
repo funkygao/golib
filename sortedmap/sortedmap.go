@@ -4,6 +4,7 @@ import (
 	"sort"
 )
 
+// Not thread safe
 type SortedMap struct {
 	m map[string]int
 	s []string
