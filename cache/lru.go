@@ -10,7 +10,7 @@ type LruCache struct {
 	Cacheable
 	HasLength
 
-	*sync.RWMutex
+	*sync.Mutex
 
 	// MaxEntries is the maximum number of cache entries before
 	// an item is evicted. Zero means no limit.
@@ -32,7 +32,7 @@ func NewLruCache(maxEntries int) *LruCache {
 		MaxEntries: maxEntries,
 		ll:         list.New(),
 		cache:      make(map[interface{}]*list.Element),
-		RWMutex:    new(sync.RWMutex),
+		Mutex:    new(sync.Mutex),
 	}
 }
 
@@ -60,8 +60,8 @@ func (c *LruCache) Set(key Key, value interface{}) {
 
 // Get looks up a key's value from the cache.
 func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
-	c.RLock()
-	defer c.RUnlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if c.cache == nil {
 		return
@@ -107,8 +107,8 @@ func (c *LruCache) removeElement(e *list.Element) {
 
 // Len returns the number of items in the cache.
 func (c *LruCache) Len() int {
-	c.RLock()
-	defer c.RUnlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if c.cache == nil {
 		return 0
