@@ -63,3 +63,7 @@ func (this *Node) dotGraph(sb *str.StringBuilder) {
 		sb.WriteString(fmt.Sprintf("\t\"%s\";\n", this.name))
 	}
 }
+
+func (this *Node) Children() []*Node {
+	return this.children
+}
