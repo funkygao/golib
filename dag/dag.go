@@ -7,7 +7,9 @@ import (
 	"os"
 )
 
-type Dag map[string]*Node
+type Dag struct {
+	nodes map[string]*Node
+}
 
 type Node struct {
 	name         string
@@ -17,18 +19,26 @@ type Node struct {
 	children     []*Node
 }
 
-func New() Dag {
-	return make(map[string]*Node)
+func New() *Dag {
+	this := new(Dag)
+	this.nodes = make(map[string]*Node)
+	return this
 }
 
-func (this Dag) AddEdge(from, to string) {
-	fromNode := this[from]
-	toNode := this[to]
+func (this *Dag) AddVertex(name string) *Node {
+	node := &Node{name: name}
+	this.nodes[name] = node
+	return node
+}
+
+func (this *Dag) AddEdge(from, to string) {
+	fromNode := this.nodes[from]
+	toNode := this.nodes[to]
 	fromNode.children = append(fromNode.children, toNode)
 	toNode.indegree++
 }
 
-func (this Dag) MakeDotGraph(fn string) {
+func (this *Dag) MakeDotGraph(fn string) {
 	file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		panic(err)
@@ -37,7 +47,7 @@ func (this Dag) MakeDotGraph(fn string) {
 
 	sb := str.NewStringBuilder()
 	sb.WriteString("digraph depgraph {\n\trankdir=LR;\n")
-	for _, node := range this {
+	for _, node := range this.nodes {
 		node.dotGraph(sb)
 	}
 	sb.WriteString("}\n")
