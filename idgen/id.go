@@ -26,10 +26,12 @@ const (
 	twepoch = int64(1288834974657)
 )
 
+// throughput of 5Million/s
 type IdGenerator struct {
 	mutex         sync.Mutex
-	did           int64 // data center id
-	wid           int64 // worker id
+	cookie        uint32 // random number to mitigate brute force lookups TODO
+	did           int64  // data center id
+	wid           int64  // worker id
 	seq           int64
 	lastTimestamp int64
 }
