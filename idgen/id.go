@@ -14,8 +14,6 @@ var (
 const (
 	workerIdBits       = uint64(5)
 	datacenterIdBits   = uint64(5)
-	maxWorkerId        = int64(-1) ^ (int64(-1) << workerIdBits)
-	maxDatacenterId    = int64(-1) ^ (int64(-1) << datacenterIdBits)
 	sequenceBits       = uint64(12)
 	workerIdShift      = sequenceBits
 	datacenterIdShift  = sequenceBits + workerIdBits
