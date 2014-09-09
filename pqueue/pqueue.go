@@ -58,8 +58,13 @@ func (this *PriorityQueue) Pop() interface{} {
 	return item
 }
 
+func (this *PriorityQueue) Peek() interface{} {
+    // the highest priority item is at index zero
+    return (*this)[0]
+}
+
 // update modifies the priority and value of an Item in the queue.
-func (this *PriorityQueue) update(item *Item, value interface{}, priority int) {
+func (this *PriorityQueue) lupdate(item *Item, value interface{}, priority int) {
 	heap.Remove(this, item.index)
 	item.Value = value
 	item.Priority = priority
