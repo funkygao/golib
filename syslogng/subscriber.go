@@ -5,16 +5,18 @@ import (
     "os"
 )
 
-func Subscribe() chan string {
+func Subscribe() chan []byte {
     bio := bufio.NewReader(os.Stdin)
-    ch := make(chan string)
+    ch := make(chan []byte)
     go func() {
         for {
             line, err := readline(bio)
             if err != nil {
+                close(ch)
+                break
+            } else {
+                ch <- line
             }
-
-            ch <- string(line)
         }
     }()
 
