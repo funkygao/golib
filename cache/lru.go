@@ -73,6 +73,32 @@ func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 	return
 }
 
+func (c *LruCache) Decr(key Key) (value int) {
+    c.Lock()
+    defer c.Unlock()
+
+	if c.cache == nil {
+		c.cache = make(map[interface{}]*list.Element)
+		c.ll = list.New()
+	}
+	if ee, ok := c.cache[key]; ok {
+		c.ll.MoveToFront(ee)
+        counter := ee.Value.(*entry).value.(int)
+		ee.Value.(*entry).value = counter - 1
+		return counter - 1
+	}
+
+    // 1st element
+	ele := c.ll.PushFront(&entry{key, 0})
+	c.cache[key] = ele
+	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
+		// evict olded element
+		c.removeOldest()
+	}
+
+    return 0
+}
+
 func (c *LruCache) Inc(key Key) (value int) {
     c.Lock()
     defer c.Unlock()
