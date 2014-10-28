@@ -8,10 +8,7 @@ import (
 
 var (
 	BuildID = "unknown"
-)
-
-const (
-	VERSION = "0.1.0a"
+    VERSION = "0.1.0a"
 )
 
 func ShowVersionAndExit() {
