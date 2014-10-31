@@ -72,11 +72,6 @@ func RegisterHttpApi(path string,
 		)
 
 		params, err := api.decodeHttpParams(w, req)
-		log.Debug("%s \"%s %s %s\"",
-			req.RemoteAddr,
-			req.Method,
-			req.RequestURI,
-			req.Proto)
 		if err == nil {
 			ret, err = handlerFunc(w, req, params)
 		} else {
