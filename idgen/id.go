@@ -2,7 +2,6 @@ package idgen
 
 import (
 	"errors"
-	"os"
 	"sync"
 	"time"
 )
@@ -34,9 +33,10 @@ type IdGenerator struct {
 	lastTimestamp int64
 }
 
-func NewIdGenerator() (this *IdGenerator) {
+func NewIdGenerator(did int, wid int) (this *IdGenerator) {
 	this = new(IdGenerator)
-	this.wid = int64(os.Getpid())
+    this.did = int64(did)
+	this.wid = int64(wid)
 	return
 }
 

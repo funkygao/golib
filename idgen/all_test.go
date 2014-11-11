@@ -6,7 +6,7 @@ import (
 )
 
 func TestNextId(t *testing.T) {
-	id := NewIdGenerator()
+	id := NewIdGenerator(1, 1)
 	for i := 0; i < 100; i++ {
 		n, err := id.Next()
 		assert.Equal(t, nil, err)
@@ -21,7 +21,7 @@ func TestNextId(t *testing.T) {
 }
 
 func BenchmarkIdNext(b *testing.B) {
-	id := NewIdGenerator()
+	id := NewIdGenerator(2, 3)
 	for i := 0; i < b.N; i++ {
 		id.Next()
 	}
