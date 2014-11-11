@@ -28,7 +28,8 @@ func SetupLogging(logFile, logLevel string) {
 		log.AddFilter("stdout", level, log.NewConsoleLogWriter())
 	} else {
 		writer := log.NewFileLogWriter(logFile, false)
-		log.AddFilter("file", level, writer)
+		log.DeleteFilter("stdout")
+        log.AddFilter("file", level, writer)
 		writer.SetFormat("[%d %T] [%L] (%S) %M")
 		writer.SetRotate(true)
 		writer.SetRotateSize(0)
