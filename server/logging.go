@@ -18,6 +18,9 @@ func SetupLogging(logFile, logLevel string) {
 
 	case "debug":
 		level = log.DEBUG
+
+    case "trace":
+        level = log.TRACE
 	}
 
 	for _, filter := range log.Global {
