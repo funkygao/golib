@@ -8,6 +8,7 @@ type VBucketMap struct {
 	bucketMap []int
 }
 
+// If slots=0, use default slots num
 func New(slots int) (this *VBucketMap) {
 	if slots <= 0 {
 		slots = SLOTS_DEFAULT
