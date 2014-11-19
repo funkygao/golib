@@ -3,9 +3,9 @@
 package vbmap
 
 type VBucketMap struct {
-	slots     int      // fixed number
+	slots     int      // fixed number of vBucket
 	nodes     []string // server list
-	bucketMap []int
+	bucketMap []int    // vBucket to node map
 }
 
 // If slots=0, use default slots num
@@ -20,7 +20,7 @@ func New(slots int) (this *VBucketMap) {
 	return
 }
 
-// VBHash finds the vbucket for the given key.
+// VBHash finds the vBucket for the given key.
 func (this *VBucketMap) Hash(key string) uint32 {
 	crc := uint32(0xffffffff)
 	for x := 0; x < len(key); x++ {
@@ -35,7 +35,7 @@ func (this *VBucketMap) SetNodes(nodes []string) *VBucketMap {
 	n := len(nodes)
 	// distribute nodes evenly across all slots
 	for i := 0; i < this.slots; i++ {
-		this.bucketMap[i] = i % n
+		this.bucketMap[i] = i % n // FIXME 
 	}
 
 	return this
@@ -43,6 +43,6 @@ func (this *VBucketMap) SetNodes(nodes []string) *VBucketMap {
 
 func (this *VBucketMap) Node(key string) string {
 	hash := int64(this.Hash(key))
-	slot := hash % int64(this.slots)
-	return this.nodes[this.bucketMap[slot]]
+	vBucket := hash % int64(this.slots)
+	return this.nodes[this.bucketMap[vBucket]]
 }
