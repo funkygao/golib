@@ -19,19 +19,21 @@ func New(maxEntries int) *MutexMap {
 // block till acquire the lock
 func (this *MutexMap) Lock(key cache.Key) {
 	this.mu.Lock()
-	defer this.mu.Unlock()
 
 	value, present := this.items.Get(key)
 	if !present {
 		lock := sync.Mutex{}
 		lock.Lock()
 		this.items.Set(key, lock)
+
+		this.mu.Unlock()
 		return
 	}
 
 	// this key already exists in items
 	lock := value.(sync.Mutex)
 	lock.Lock()
+	this.mu.Unlock()
 }
 
 func (this *MutexMap) Unlock(key cache.Key) {
