@@ -27,7 +27,7 @@ func KillProcess(pidFile string) error {
 		return err
 	}
 
-	if err := process.Kill(); err != nil {
+	if err = process.Kill(); err != nil {
 		return err
 	}
 
