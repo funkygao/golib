@@ -22,7 +22,7 @@ func (this *MutexMap) Lock(key cache.Key) {
 
 	value, present := this.items.Get(key)
 	if !present {
-		lock := sync.Mutex{}
+		lock := &sync.Mutex{}
 		lock.Lock()
 		this.items.Set(key, lock)
 
@@ -31,13 +31,18 @@ func (this *MutexMap) Lock(key cache.Key) {
 	}
 
 	// this key already exists in items
-	lock := value.(sync.Mutex)
+	lock := value.(*sync.Mutex)
 	lock.Lock()
+
 	this.mu.Unlock()
 }
 
 func (this *MutexMap) Unlock(key cache.Key) {
-	value, _ := this.items.Get(key) // must be always present
-	lock := value.(sync.Mutex)
+	value, present := this.items.Get(key) // must be always present
+	if !present {
+		return
+	}
+
+	lock := value.(*sync.Mutex)
 	lock.Unlock()
 }
