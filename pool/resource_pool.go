@@ -3,6 +3,7 @@ package pool
 import (
 	"fmt"
 	"github.com/funkygao/golib/sync2"
+	log "github.com/funkygao/log4go"
 	"time"
 )
 
@@ -134,8 +135,7 @@ func (this *ResourcePool) Put(resource Resource) {
 	select {
 	case this.resourcePool <- wrapper:
 	default:
-		// TODO panic?
-		panic("Attempt to Put into a full ResourcePool")
+		log.Error("Attempt to Put into a full ResourcePool")
 	}
 }
 
