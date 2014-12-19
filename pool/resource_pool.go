@@ -79,7 +79,7 @@ func (this *ResourcePool) TryGet() (resource Resource, err error) {
 }
 
 func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
-	if this == nil {
+	if this == nil || this.IsClosed() {
 		return nil, CLOSED_ERR
 	}
 
@@ -109,6 +109,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		wrapper.resource.Close()
 		wrapper.resource = nil
 	}
+
 	if wrapper.resource == nil {
 		wrapper.resource, err = this.factory()
 		if err != nil {
@@ -182,6 +183,7 @@ func (this *ResourcePool) SetCapacity(capacity int) error {
 	if capacity == 0 {
 		close(this.resourcePool)
 	}
+
 	return nil
 }
 
