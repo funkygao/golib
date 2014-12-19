@@ -1,9 +1,11 @@
 package server
 
 import (
+	"fmt"
 	log "github.com/funkygao/log4go"
 	"os"
 	"syscall"
+	"time"
 )
 
 func SetupLogging(logFile, logLevel, crashLogFile string) {
@@ -49,6 +51,8 @@ func SetupLogging(logFile, logLevel, crashLogFile string) {
 		}
 
 		syscall.Dup2(int(f.Fd()), 2)
+		fmt.Fprintf(os.Stderr, "\n%s %s (build: %s)\n", time.Now().String(),
+			VERSION, BuildID)
 	}
 
 }
