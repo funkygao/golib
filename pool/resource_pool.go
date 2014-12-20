@@ -104,8 +104,9 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 
 	// Close the aged idle resource
 	timeout := this.idleTimeout.Get()
+	now := time.Now()
 	if wrapper.resource != nil && timeout > 0 &&
-		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
+		wrapper.timeUsed.Add(timeout).Sub(now) < 0 {
 		wrapper.resource.Close()
 		wrapper.resource = nil
 	}
@@ -117,6 +118,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		}
 	}
 
+	wrapper.timeUsed = now
 	return wrapper.resource, err
 }
 
