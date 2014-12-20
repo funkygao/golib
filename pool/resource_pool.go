@@ -136,7 +136,7 @@ func (this *ResourcePool) Put(resource Resource) {
 	select {
 	case this.resourcePool <- wrapper:
 	default:
-		log.Error("Attempt to Put into a full ResourcePool")
+		log.Error("Attempt to put into a full ResourcePool, discarded")
 	}
 }
 
