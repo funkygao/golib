@@ -9,6 +9,7 @@ import (
 
 // ResourcePool allows you to use a pool of resources.
 type ResourcePool struct {
+	name         string
 	resourcePool chan resourceWrapper
 	factory      Factory
 	capacity     sync2.AtomicInt64
@@ -29,13 +30,14 @@ type resourceWrapper struct {
 // maxCap is the maximum capacity of the pool.
 // If a resource is unused beyond idleTimeout, it's discarded.
 // An idleTimeout of 0 means that there is no timeout.
-func NewResourcePool(factory Factory, capacity, maxCap int,
+func NewResourcePool(name string, factory Factory, capacity, maxCap int,
 	idleTimeout time.Duration) *ResourcePool {
 	if capacity <= 0 || maxCap <= 0 || capacity > maxCap {
 		panic("Invalid/out of range capacity")
 	}
 
 	this := &ResourcePool{
+		name:         name,
 		resourcePool: make(chan resourceWrapper, maxCap),
 		factory:      factory,
 		capacity:     sync2.AtomicInt64(capacity),
@@ -93,6 +95,9 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		if !wait {
 			return nil, nil
 		}
+
+		log.Warn("ResourcePool[%s] empty resource, pending: %d",
+			this.name, this.WaitCount())
 		startTime := time.Now()
 		wrapper, ok = <-this.resourcePool
 		this.recordWait(startTime)
@@ -104,9 +109,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 
 	// Close the aged idle resource
 	timeout := this.idleTimeout.Get()
-	now := time.Now()
 	if wrapper.resource != nil && timeout > 0 &&
-		wrapper.timeUsed.Add(timeout).Sub(now) < 0 {
+		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
 		wrapper.resource.Close()
 		wrapper.resource = nil
 	}
@@ -118,7 +122,6 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		}
 	}
 
-	wrapper.timeUsed = now
 	return wrapper.resource, err
 }
 
@@ -133,12 +136,14 @@ func (this *ResourcePool) Put(resource Resource) {
 
 	var wrapper resourceWrapper
 	if resource != nil {
-		wrapper = resourceWrapper{resource, time.Now()}
+		wrapper = resourceWrapper{resource: resource, timeUsed: time.Now()}
 	}
+
 	select {
 	case this.resourcePool <- wrapper:
 	default:
-		log.Error("Attempt to put into a full ResourcePool, discarded")
+		wrapper.resource.Close() // FIXME should close it before discard it?
+		log.Warn("ResourcePool[%s] full, resource closed and discarded", this.name)
 	}
 }
 
