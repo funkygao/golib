@@ -40,9 +40,9 @@ func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
 	}
 
     if debugAddr != "" {
-	    log.Info("HTTP serving at %s with pprof at %s", listenAddr, debugAddr)
+	    log.Debug("HTTP serving at %s with pprof at %s", listenAddr, debugAddr)
     } else {
-	    log.Info("HTTP serving at %s", listenAddr)
+	    log.Debug("HTTP serving at %s", listenAddr)
     }
 
 	go api.httpServer.Serve(api.httpListener)
