@@ -4,12 +4,7 @@ package pool
 type Factory func() (Resource, error)
 
 // Every resource needs to suport the Resource interface.
+// A ResourcePool is composed of several Resource's
 type Resource interface {
 	Close()
-}
-
-// For those resource that wants keepalive feature, it will
-// implement Keepalive interface.
-type Keepalive interface {
-	Keepalive()
 }

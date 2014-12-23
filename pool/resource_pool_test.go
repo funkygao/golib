@@ -6,9 +6,9 @@ package pool
 
 import (
 	"errors"
+	"github.com/funkygao/golib/sync2"
 	"testing"
 	"time"
-	"github.com/funkygao/golib/sync2"
 )
 
 var lastId, count sync2.AtomicInt64
@@ -46,7 +46,7 @@ func SlowFailFactory() (Resource, error) {
 func TestOpen(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(PoolFactory, 6, 6, time.Second)
+	p := NewResourcePool("TestOpen", PoolFactory, 6, 6, time.Second)
 	p.SetCapacity(5)
 	var resources [10]Resource
 
@@ -223,7 +223,7 @@ func TestOpen(t *testing.T) {
 func TestShrinking(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(PoolFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestShrinking", PoolFactory, 5, 5, time.Second)
 	var resources [10]Resource
 	// Leave one empty slot in the pool
 	for i := 0; i < 4; i++ {
@@ -367,7 +367,7 @@ func TestShrinking(t *testing.T) {
 func TestClosing(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(PoolFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestClosing", PoolFactory, 5, 5, time.Second)
 	var resources [10]Resource
 	for i := 0; i < 5; i++ {
 		r, err := p.Get()
@@ -420,7 +420,7 @@ func TestClosing(t *testing.T) {
 func TestIdleTimeout(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(PoolFactory, 1, 1, 10*time.Nanosecond)
+	p := NewResourcePool("TestIdleTimeout", PoolFactory, 1, 1, 10*time.Nanosecond)
 	defer p.Close()
 
 	r, err := p.Get()
@@ -451,7 +451,7 @@ func TestIdleTimeout(t *testing.T) {
 func TestCreateFail(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(FailFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestCreateFail", FailFactory, 5, 5, time.Second)
 	defer p.Close()
 	if _, err := p.Get(); err.Error() != "Failed" {
 		t.Errorf("Expecting Failed, received %v", err)
@@ -466,7 +466,7 @@ func TestCreateFail(t *testing.T) {
 func TestSlowCreateFail(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool(SlowFailFactory, 2, 2, time.Second)
+	p := NewResourcePool("TestSlowCreateFail", SlowFailFactory, 2, 2, time.Second)
 	defer p.Close()
 	ch := make(chan bool)
 	// The third Get should not wait indefinitely
