@@ -18,6 +18,8 @@ type ResourcePool struct {
 	// stats
 	waitCount sync2.AtomicInt64
 	waitTime  sync2.AtomicDuration
+
+	diagnosticTracker *DiagnosticTracker
 }
 
 type resourceWrapper struct {
@@ -37,16 +39,20 @@ func NewResourcePool(name string, factory Factory, capacity, maxCap int,
 	}
 
 	this := &ResourcePool{
-		name:         name,
-		resourcePool: make(chan resourceWrapper, maxCap),
-		factory:      factory,
-		capacity:     sync2.AtomicInt64(capacity),
-		idleTimeout:  sync2.AtomicDuration(idleTimeout),
+		name:              name,
+		resourcePool:      make(chan resourceWrapper, maxCap),
+		factory:           factory,
+		capacity:          sync2.AtomicInt64(capacity),
+		idleTimeout:       sync2.AtomicDuration(idleTimeout),
+		diagnosticTracker: NewDiagnosticTracker(name, maxCap),
 	}
 
 	for i := 0; i < capacity; i++ {
 		this.resourcePool <- resourceWrapper{}
 	}
+
+	go this.diagnosticTracker.Run(time.Second * 30) // TODO
+
 	return this
 }
 
@@ -119,6 +125,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		wrapper.resource, err = this.factory()
 		if err != nil {
 			this.resourcePool <- resourceWrapper{}
+		} else {
+			this.diagnosticTracker.BorrowResource(wrapper.resource)
 		}
 	}
 
@@ -141,6 +149,8 @@ func (this *ResourcePool) Put(resource Resource) {
 
 	select {
 	case this.resourcePool <- wrapper:
+		this.diagnosticTracker.ReturnResource(wrapper.resource)
+
 	default:
 		wrapper.resource.Close() // FIXME should close it before discard it?
 		log.Warn("ResourcePool[%s] full, resource closed and discarded", this.name)
