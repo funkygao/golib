@@ -2,43 +2,43 @@ package pool
 
 import (
 	log "github.com/funkygao/log4go"
+	"sync"
 	"time"
 )
 
-type resourceTracker struct {
-	r Resource
-	t time.Time
-}
-
 // A diagnostic tracker for the recycle pool
 type DiagnosticTracker struct {
-	name      string
-	capacity  int
-	trackings []resourceTracker
-	quit      chan bool
+	pool  *ResourcePool
+	quit  chan bool
+	mutex sync.Mutex
+
+	trackings map[uint64]resourceWrapper // key is resource id
 }
 
-func NewDiagnosticTracker(name string, capacity int) *DiagnosticTracker {
+func NewDiagnosticTracker(pool *ResourcePool) *DiagnosticTracker {
 	return &DiagnosticTracker{
-		name:      name,
-		capacity:  capacity,
-		trackings: make([]resourceTracker, 0, capacity), // FIXME
+		pool:      pool,
 		quit:      make(chan bool),
+		trackings: make(map[uint64]resourceWrapper),
 	}
 }
 
 func (this *DiagnosticTracker) BorrowResource(r Resource) {
-	t := resourceTracker{r: r, t: time.Now()}
-	this.trackings = append(this.trackings, t)
+	this.mutex.Lock()
+	this.trackings[r.Id()] = resourceWrapper{resource: r, timeUsed: time.Now()}
+	this.mutex.Unlock()
 }
 
 func (this *DiagnosticTracker) ReturnResource(r Resource) {
-
+	this.mutex.Lock()
+	delete(this.trackings, r.Id())
+	this.mutex.Unlock()
 }
 
 func (this *DiagnosticTracker) Run(interval time.Duration) {
 	var (
-		ever = true
+		ever          = true
+		borrowTimeout = 10 // TODO
 	)
 
 	ticker := time.NewTicker(interval)
@@ -47,16 +47,22 @@ func (this *DiagnosticTracker) Run(interval time.Duration) {
 	for ever {
 		select {
 		case <-ticker.C:
-			log.Debug("resource pool[%s]: %+v", this.name, this.trackings)
+			if int64(len(this.trackings)) > this.pool.MaxCapacity() {
+				log.Warn("ResourcePool[%s] too few returned: %d < %d", this.pool.name,
+					len(this.trackings), this.pool.MaxCapacity())
+			}
 
-			for _, t := range this.trackings {
-				if time.Now().Sub(t.t).Seconds() > 10 {
-					// not return after borrow for >10s
-					log.Warn("resource[%+v] not return after 10s", t.r)
+			for _, r := range this.trackings {
+				if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
+					log.Warn("ResourcePool[%s] not return within %ds, closed",
+						this.pool.name, borrowTimeout)
+
+					// force resource close
+					r.resource.Close()
 				}
 			}
 
-			this.trackings = this.trackings[:0] // reset
+			// FIXME if less returns, this.trackings will be bigger and bigger
 
 		case <-this.quit:
 			ever = false

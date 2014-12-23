@@ -39,14 +39,15 @@ func NewResourcePool(name string, factory Factory, capacity, maxCap int,
 	}
 
 	this := &ResourcePool{
-		name:              name,
-		resourcePool:      make(chan resourceWrapper, maxCap),
-		factory:           factory,
-		capacity:          sync2.AtomicInt64(capacity),
-		idleTimeout:       sync2.AtomicDuration(idleTimeout),
-		diagnosticTracker: NewDiagnosticTracker(name, maxCap),
+		name:         name,
+		resourcePool: make(chan resourceWrapper, maxCap),
+		factory:      factory,
+		capacity:     sync2.AtomicInt64(capacity),
+		idleTimeout:  sync2.AtomicDuration(idleTimeout),
 	}
+	this.diagnosticTracker = NewDiagnosticTracker(this)
 
+	// put initial empty resources to pool
 	for i := 0; i < capacity; i++ {
 		this.resourcePool <- resourceWrapper{}
 	}
@@ -149,7 +150,9 @@ func (this *ResourcePool) Put(resource Resource) {
 
 	select {
 	case this.resourcePool <- wrapper:
-		this.diagnosticTracker.ReturnResource(wrapper.resource)
+		if wrapper.resource != nil {
+			this.diagnosticTracker.ReturnResource(wrapper.resource)
+		}
 
 	default:
 		wrapper.resource.Close() // FIXME should close it before discard it?

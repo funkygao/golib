@@ -25,6 +25,10 @@ func (tr *TestResource) Close() {
 	}
 }
 
+func (this *TestResource) Id() uint64 {
+	return 1
+}
+
 func (tr *TestResource) IsClosed() bool {
 	return tr.closed
 }
