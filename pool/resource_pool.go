@@ -108,11 +108,13 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 			return nil, nil
 		}
 
+		this.waitCount.Add(1)
 		log.Warn("ResourcePool[%s] empty resource, pending: %d",
 			this.name, this.WaitCount())
-		startTime := time.Now()
+
+		t1 := time.Now()
 		wrapper, ok = <-this.resourcePool
-		this.recordWait(startTime)
+		this.waitTime.Add(time.Now().Sub(t1))
 	}
 
 	if !ok {
@@ -213,11 +215,6 @@ func (this *ResourcePool) SetCapacity(capacity int) error {
 	}
 
 	return nil
-}
-
-func (this *ResourcePool) recordWait(start time.Time) {
-	this.waitCount.Add(1)
-	this.waitTime.Add(time.Now().Sub(start))
 }
 
 func (this *ResourcePool) IdleTimeout() time.Duration {
