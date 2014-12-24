@@ -48,14 +48,16 @@ func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
 					len(this.outstandings), this.pool.MaxCapacity())
 			}
 
-			for _, r := range this.outstandings {
-				if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
-					log.Warn("ResourcePool[%s] slow resource:%d killed",
-						this.pool.name, r.resource.Id())
+			if borrowTimeout > 0 {
+				for _, r := range this.outstandings {
+					if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
+						log.Warn("ResourcePool[%s] slow resource:%d killed",
+							this.pool.name, r.resource.Id())
 
-					r.resource.Close() // force resource close
-					//this.pool.Put(nil)
-					this.ReturnResource(r.resource)
+						r.resource.Close() // force resource close
+						//this.pool.Put(nil)
+						this.ReturnResource(r.resource)
+					}
 				}
 			}
 
