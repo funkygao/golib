@@ -99,6 +99,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	)
 	select {
 	case wrapper, ok = <-this.resourcePool:
+		this.waitCount.Set(0) // reset
 		if wrapper.resource != nil {
 			this.diagnosticTracker.BorrowResource(wrapper.resource)
 		}
