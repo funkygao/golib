@@ -33,7 +33,8 @@ type resourceWrapper struct {
 // If a resource is unused beyond idleTimeout, it's discarded.
 // An idleTimeout of 0 means that there is no timeout.
 func NewResourcePool(name string, factory Factory, capacity, maxCap int,
-	idleTimeout time.Duration) *ResourcePool {
+	idleTimeout time.Duration, diagnosticInterval time.Duration,
+	borrowMaxSeconds int) *ResourcePool {
 	if capacity <= 0 || maxCap <= 0 || capacity > maxCap {
 		panic("Invalid/out of range capacity")
 	}
@@ -52,7 +53,7 @@ func NewResourcePool(name string, factory Factory, capacity, maxCap int,
 		this.resourcePool <- resourceWrapper{}
 	}
 
-	go this.diagnosticTracker.Run(time.Second*30, 10) // TODO
+	go this.diagnosticTracker.Run(diagnosticInterval, borrowMaxSeconds)
 
 	return this
 }
