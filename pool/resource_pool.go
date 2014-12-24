@@ -52,7 +52,7 @@ func NewResourcePool(name string, factory Factory, capacity, maxCap int,
 		this.resourcePool <- resourceWrapper{}
 	}
 
-	go this.diagnosticTracker.Run(time.Second * 30) // TODO
+	go this.diagnosticTracker.Run(time.Second*30, 10) // TODO
 
 	return this
 }
@@ -98,6 +98,10 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	)
 	select {
 	case wrapper, ok = <-this.resourcePool:
+		if wrapper.resource != nil {
+			this.diagnosticTracker.BorrowResource(wrapper.resource)
+		}
+
 	default:
 		if !wait {
 			return nil, nil
@@ -155,8 +159,11 @@ func (this *ResourcePool) Put(resource Resource) {
 		}
 
 	default:
-		wrapper.resource.Close() // FIXME should close it before discard it?
-		log.Warn("ResourcePool[%s] full, resource closed and discarded", this.name)
+		if wrapper.resource != nil {
+			wrapper.resource.Close() // FIXME should close it before discard it?
+
+			log.Warn("ResourcePool[%s] full, resource closed and discarded", this.name)
+		}
 	}
 }
 

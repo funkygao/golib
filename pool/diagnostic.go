@@ -12,57 +12,54 @@ type DiagnosticTracker struct {
 	quit  chan bool
 	mutex sync.Mutex
 
-	trackings map[uint64]resourceWrapper // key is resource id
+	outstandings map[uint64]resourceWrapper // key is resource id
 }
 
 func NewDiagnosticTracker(pool *ResourcePool) *DiagnosticTracker {
 	return &DiagnosticTracker{
-		pool:      pool,
-		quit:      make(chan bool),
-		trackings: make(map[uint64]resourceWrapper),
+		pool:         pool,
+		quit:         make(chan bool),
+		outstandings: make(map[uint64]resourceWrapper),
 	}
 }
 
 func (this *DiagnosticTracker) BorrowResource(r Resource) {
 	this.mutex.Lock()
-	this.trackings[r.Id()] = resourceWrapper{resource: r, timeUsed: time.Now()}
+	this.outstandings[r.Id()] = resourceWrapper{resource: r, timeUsed: time.Now()}
 	this.mutex.Unlock()
 }
 
 func (this *DiagnosticTracker) ReturnResource(r Resource) {
 	this.mutex.Lock()
-	delete(this.trackings, r.Id())
+	delete(this.outstandings, r.Id())
 	this.mutex.Unlock()
 }
 
-func (this *DiagnosticTracker) Run(interval time.Duration) {
-	var (
-		ever          = true
-		borrowTimeout = 10 // TODO
-	)
-
+func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
+	ever := true
 	for ever {
 		select {
 		case <-ticker.C:
-			if int64(len(this.trackings)) > this.pool.MaxCapacity() {
+			if int64(len(this.outstandings)) > this.pool.MaxCapacity() {
 				log.Warn("ResourcePool[%s] too few returned: %d < %d", this.pool.name,
-					len(this.trackings), this.pool.MaxCapacity())
+					len(this.outstandings), this.pool.MaxCapacity())
 			}
 
-			for _, r := range this.trackings {
+			for _, r := range this.outstandings {
 				if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
-					log.Warn("ResourcePool[%s] not return within %ds, closed",
-						this.pool.name, borrowTimeout)
+					log.Warn("ResourcePool[%s] slow resource:%d killed",
+						this.pool.name, r.resource.Id())
 
-					// force resource close
-					r.resource.Close()
+					r.resource.Close() // force resource close
+					//this.pool.Put(nil)
+					this.ReturnResource(r.resource)
 				}
 			}
 
-			// FIXME if less returns, this.trackings will be bigger and bigger
+			// FIXME if less returns, this.outstandings will be bigger and bigger
 
 		case <-this.quit:
 			ever = false
