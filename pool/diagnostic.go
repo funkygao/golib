@@ -36,6 +36,11 @@ func (this *DiagnosticTracker) ReturnResource(r Resource) {
 }
 
 func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
+	if interval == 0 {
+		log.Warn("ResourcePool[%s] diagnostic disabled", this.pool.name)
+		return
+	}
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
