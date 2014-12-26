@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/funkygao/golib/signal"
-	log "github.com/funkygao/log4go"
 	"os"
 	"runtime"
 	"syscall"
@@ -16,6 +15,4 @@ func (this *Server) Launch() {
 	signal.IgnoreSignal(syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
 
 	runtime.GOMAXPROCS(this.Int("max_cpu", runtime.NumCPU()))
-
-	log.Info("Server[%s.%s] ready", this.Name, BuildID)
 }
