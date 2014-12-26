@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// LRU cache implementation.
+// goroutine safe LRU cache implementation.
 type LruCache struct {
 	Cacheable
 	HasLength
