@@ -51,7 +51,7 @@ func SetupLogging(logFile, logLevel, crashLogFile string) {
 		}
 
 		syscall.Dup2(int(f.Fd()), 2)
-		fmt.Fprintf(os.Stderr, "\n%s %s (build: %s)\n", time.Now().String(),
+		fmt.Fprintf(os.Stderr, "\n%s %s (build: %s)\n===================\n", time.Now().String(),
 			VERSION, BuildID)
 	}
 
