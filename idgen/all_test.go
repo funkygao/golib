@@ -44,16 +44,17 @@ func TestNextIdWithTagError(t *testing.T) {
 }
 
 func TestDecodeId(t *testing.T) {
-	idgen, _ := NewIdGenerator(1)
+	idgen, _ := NewIdGenerator(12)
 	for i := 0; i < 8; i++ {
 		idgen.NextWithTag(5)
 	}
 
 	id, _ := idgen.NextWithTag(5)
-	ts, tag, seq := DecodeId(id)
-	t.Logf("id:%d, ts:%d, tag:%d, seq:%d", id, ts, tag, seq)
+	ts, tag, wid, seq := DecodeId(id)
+	t.Logf("id:%d, ts:%d, tag:%d, wid:%d, seq:%d", id, ts, tag, wid, seq)
 	assert.Equal(t, int64(8), seq)
 	assert.Equal(t, int64(5), tag)
+	assert.Equal(t, int64(12), wid)
 }
 
 func BenchmarkIdNext(b *testing.B) {

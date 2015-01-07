@@ -13,13 +13,15 @@ var (
 )
 
 const (
-	WorkerIdBits       = uint64(5)  // max 31
-	TagIdBits          = uint64(5)  // max 31
-	SequenceBits       = uint64(12) // max 4095, limit 3M/s
+	WorkerIdBits = uint64(5)  // max 31
+	TagIdBits    = uint64(5)  // max 31
+	SequenceBits = uint64(12) // max 4095, limit 3M/s
+
 	WorkerIdShift      = SequenceBits
 	TagIdShift         = SequenceBits + WorkerIdBits
 	TimestampLeftShift = SequenceBits + WorkerIdBits + TagIdBits
-	SequenceMask       = int64(-1) ^ (int64(-1) << SequenceBits)
+
+	SequenceMask = int64(-1) ^ (int64(-1) << SequenceBits)
 
 	MaxTagId    = (1 << TagIdBits) - 1
 	MaxWorkerId = (1 << WorkerIdBits) - 1
@@ -28,8 +30,6 @@ const (
 	twepoch = int64(1388834974657)
 )
 
-// throughput of 5Million/s
-// ts(22) | wid(5) | tag(5) | seq(12)
 type IdGenerator struct {
 	mutex         sync.Mutex
 	cookie        uint32 // random number to mitigate brute force lookups TODO
@@ -86,8 +86,8 @@ func (this *IdGenerator) nextId(tag int16) (int64, error) {
 	this.lastTimestamp = ts
 
 	r := ((ts - twepoch) << TimestampLeftShift) |
-		(this.wid << WorkerIdShift) |
 		(int64(tag) << TagIdShift) |
+		(this.wid << WorkerIdShift) |
 		this.seq
 	return r, nil
 }
