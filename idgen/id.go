@@ -7,36 +7,36 @@ import (
 )
 
 var (
-	ErrorClockBackwards = errors.New("Clock backwards")
+	ErrorClockBackwards  = errors.New("Clock backwards")
+	ErrorInvalidWorkerId = errors.New("Too big worker id")
 )
 
 const (
-	workerIdBits       = uint64(5)
-	datacenterIdBits   = uint64(5)
-	sequenceBits       = uint64(12)
-	workerIdShift      = sequenceBits
-	datacenterIdShift  = sequenceBits + workerIdBits
-	timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits
-	sequenceMask       = int64(-1) ^ (int64(-1) << sequenceBits)
+	WorkerIdBits       = uint64(5) // max 31
+	SequenceBits       = uint64(12)
+	WorkerIdShift      = SequenceBits
+	TimestampLeftShift = SequenceBits + WorkerIdBits
+	SequenceMask       = int64(-1) ^ (int64(-1) << SequenceBits)
 
-	// Tue, 21 Mar 2006 20:50:14.000 GMT
-	twepoch = int64(1288834974657)
+	// Sat Jan  4 19:29:34 2014
+	twepoch = int64(1388834974657)
 )
 
 // throughput of 5Million/s
 type IdGenerator struct {
 	mutex         sync.Mutex
 	cookie        uint32 // random number to mitigate brute force lookups TODO
-	did           int64  // data center id
 	wid           int64  // worker id
 	seq           int64
 	lastTimestamp int64
 }
 
-func NewIdGenerator(did int, wid int) (this *IdGenerator) {
+func NewIdGenerator(wid int) (this *IdGenerator, err error) {
 	this = new(IdGenerator)
-    this.did = int64(did)
 	this.wid = int64(wid)
+	if wid > (1<<WorkerIdBits)-1 {
+		return nil, ErrorInvalidWorkerId
+	}
 	return
 }
 
@@ -54,7 +54,7 @@ func (this *IdGenerator) Next() (int64, error) {
 	}
 
 	if this.lastTimestamp == ts {
-		this.seq = (this.seq + 1) & sequenceMask
+		this.seq = (this.seq + 1) & SequenceMask
 		if this.seq == 0 {
 			for ts <= this.lastTimestamp {
 				ts = this.milliseconds()
@@ -66,9 +66,8 @@ func (this *IdGenerator) Next() (int64, error) {
 
 	this.lastTimestamp = ts
 
-	r := ((ts - twepoch) << timestampLeftShift) |
-		(this.did << datacenterIdShift) |
-		(this.wid << workerIdShift) |
+	r := ((ts - twepoch) << TimestampLeftShift) |
+		(this.wid << WorkerIdShift) |
 		this.seq
 	return r, nil
 }
