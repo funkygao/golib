@@ -29,6 +29,7 @@ const (
 )
 
 // throughput of 5Million/s
+// ts(22) | wid(5) | tag(5) | seq(12)
 type IdGenerator struct {
 	mutex         sync.Mutex
 	cookie        uint32 // random number to mitigate brute force lookups TODO
