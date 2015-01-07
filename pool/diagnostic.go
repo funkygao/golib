@@ -56,7 +56,7 @@ func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
 			if borrowTimeout > 0 {
 				for _, r := range this.outstandings {
 					if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
-						log.Warn("ResourcePool[%s] slow resource:%d killed",
+						log.Warn("ResourcePool[%s] resource:%d killed: too long borrow",
 							this.pool.name, r.resource.Id())
 
 						r.resource.Close() // force resource close
