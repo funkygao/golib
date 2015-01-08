@@ -142,6 +142,10 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	return wrapper.resource, err
 }
 
+func (this *ResourcePool) Kill(resource Resource) {
+	this.diagnosticTracker.ReturnResource(resource)
+}
+
 // Put will return a resource to the pool. For every successful Get,
 // a corresponding Put is required. If you no longer need a resource,
 // you will need to call Put(nil) instead of returning the closed resource.
