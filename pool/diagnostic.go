@@ -49,8 +49,8 @@ func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
 		select {
 		case <-ticker.C:
 			if int64(len(this.outstandings)) > this.pool.MaxCapacity() {
-				log.Warn("ResourcePool[%s] too few returned: %d < %d", this.pool.name,
-					len(this.outstandings), this.pool.MaxCapacity())
+				log.Warn("ResourcePool[%s] too many outstandings: %d > %d",
+					this.pool.name, len(this.outstandings), this.pool.MaxCapacity())
 			}
 
 			if borrowTimeout > 0 {

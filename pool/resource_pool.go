@@ -110,7 +110,7 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		}
 
 		this.waitCount.Add(1)
-		log.Warn("ResourcePool[%s] empty resource, pending: %d",
+		log.Warn("ResourcePool[%s] empty ready, pending: %d",
 			this.name, this.WaitCount())
 
 		t1 := time.Now()
@@ -128,6 +128,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
 		wrapper.resource.Close()
 		wrapper.resource = nil
+		log.Warn("ResourcePool[%s] resource:%d idle too long: closed", this.name,
+			wrapper.resource.Id())
 	}
 
 	if wrapper.resource == nil {
@@ -169,8 +171,8 @@ func (this *ResourcePool) Put(resource Resource) {
 	default:
 		if wrapper.resource != nil {
 			wrapper.resource.Close() // FIXME should close it before discard it?
-
-			log.Warn("ResourcePool[%s] full, resource closed and discarded", this.name)
+			log.Warn("ResourcePool[%s] full, resource:%d closed", this.name,
+				wrapper.resource.Id())
 		}
 	}
 }
