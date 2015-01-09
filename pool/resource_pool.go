@@ -126,10 +126,10 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	timeout := this.idleTimeout.Get()
 	if wrapper.resource != nil && timeout > 0 &&
 		wrapper.timeUsed.Add(timeout).Sub(time.Now()) < 0 {
-		wrapper.resource.Close()
-		wrapper.resource = nil
 		log.Warn("ResourcePool[%s] resource:%d idle too long: closed", this.name,
 			wrapper.resource.Id())
+		wrapper.resource.Close()
+		wrapper.resource = nil
 	}
 
 	if wrapper.resource == nil {
