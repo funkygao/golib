@@ -2,14 +2,17 @@ package sampling
 
 import (
 	"math/rand"
-    "time"
+	"time"
+)
+
+const (
+	BASE = 10000
 )
 
 func init() {
-    rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-// Base is 1000
 func SampleRateSatisfied(rate int) bool {
-	return rand.Intn(1000) <= rate
+	return rand.Intn(BASE) <= rate
 }
