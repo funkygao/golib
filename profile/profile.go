@@ -160,8 +160,6 @@ func Start(cfg *Config) interface {
 
 			log.Println("profile: caught interrupt, stopping profiles")
 			prof.Stop()
-
-			os.Exit(0)
 		}()
 	}
 
