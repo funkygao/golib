@@ -32,11 +32,14 @@ func (s state) String() string {
 	switch s {
 	case open:
 		return "OPEN"
+
 	case closed:
 		return "CLOSED"
+
+	default:
+		return "InvalidState"
 	}
 
-	panic("unreachable")
 }
 
 type instantProvider interface {
@@ -83,6 +86,10 @@ func (b *Consecutive) String() string {
 	return fmt.Sprintf("Consecutive Breaker %s with %d Allowance and %s Deadline and %d Failures", b.state, b.FailureAllowance, b.RetryTimeout, b.failures)
 }
 
+func (b *Consecutive) enabled() bool {
+	return b.FailureAllowance > 0
+}
+
 // Fail marks the decorated subsystem as having an operation fail and may
 // trigger its subsequent circuit opening.
 //
@@ -92,6 +99,10 @@ func (b *Consecutive) String() string {
 // so-called temporary failures.  Things like invalid user queries count as
 // permanent errors and would never make sense to be retried.
 func (b *Consecutive) Fail() {
+	if !b.enabled() {
+		return
+	}
+
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -114,6 +125,10 @@ func (b *Consecutive) Fail() {
 // Succeed marks the decorated subsystem as having an operation succeed and will
 // its circuits closure if it's presently open.
 func (b *Consecutive) Succeed() {
+	if !b.enabled() {
+		return
+	}
+
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -124,6 +139,10 @@ func (b *Consecutive) Succeed() {
 
 // Open indicates whether the circuit for this subsystem is presently open.
 func (b *Consecutive) Open() bool {
+	if !b.enabled() {
+		return false
+	}
+
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -141,7 +160,6 @@ func (b *Consecutive) Open() bool {
 		return true
 	}
 
-	panic("unreachable")
 }
 
 // Reset returns this circuit back to its default state: closed.
@@ -149,6 +167,10 @@ func (b *Consecutive) Open() bool {
 // This should be called if you can divine that the underlying subsystem has
 // become unavailable before the deadline threshold has been reached.
 func (b *Consecutive) Reset() {
+	if !b.enabled() {
+		return
+	}
+
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
