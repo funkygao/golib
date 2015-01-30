@@ -31,64 +31,58 @@ func NewLruCache(maxEntries int) *LruCache {
 	return &LruCache{
 		MaxEntries: maxEntries,
 		ll:         list.New(),
-		cache:      make(map[interface{}]*list.Element),
-		Mutex:    new(sync.Mutex),
+		cache:      make(map[interface{}]*list.Element, maxEntries),
+		Mutex:      new(sync.Mutex),
 	}
 }
 
 // Add adds a value to the cache.
 func (c *LruCache) Set(key Key, value interface{}) {
 	c.Lock()
-	defer c.Unlock()
 
-	if c.cache == nil {
-		c.cache = make(map[interface{}]*list.Element)
-		c.ll = list.New()
-	}
 	if ee, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ee)
 		ee.Value.(*entry).value = value
+		c.Unlock()
 		return
 	}
+
 	ele := c.ll.PushFront(&entry{key, value})
 	c.cache[key] = ele
 	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
 		// evict olded element
 		c.removeOldest()
 	}
+
+	c.Unlock()
 }
 
 // Get looks up a key's value from the cache.
 func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 	c.Lock()
-	defer c.Unlock()
 
-	if c.cache == nil {
-		return
-	}
 	if ele, hit := c.cache[key]; hit {
 		c.ll.MoveToFront(ele)
+		c.Unlock()
 		return ele.Value.(*entry).value, true
 	}
+
+	c.Unlock()
 	return
 }
 
 func (c *LruCache) Decr(key Key) (value int) {
-    c.Lock()
-    defer c.Unlock()
+	c.Lock()
 
-	if c.cache == nil {
-		c.cache = make(map[interface{}]*list.Element)
-		c.ll = list.New()
-	}
 	if ee, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ee)
-        counter := ee.Value.(*entry).value.(int)
+		counter := ee.Value.(*entry).value.(int)
 		ee.Value.(*entry).value = counter - 1
+		c.Unlock()
 		return counter - 1
 	}
 
-    // 1st element
+	// 1st element
 	ele := c.ll.PushFront(&entry{key, 0})
 	c.cache[key] = ele
 	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
@@ -96,25 +90,22 @@ func (c *LruCache) Decr(key Key) (value int) {
 		c.removeOldest()
 	}
 
-    return 0
+	c.Unlock()
+	return 0
 }
 
 func (c *LruCache) Inc(key Key) (value int) {
-    c.Lock()
-    defer c.Unlock()
+	c.Lock()
 
-	if c.cache == nil {
-		c.cache = make(map[interface{}]*list.Element)
-		c.ll = list.New()
-	}
 	if ee, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ee)
-        counter := ee.Value.(*entry).value.(int)
+		counter := ee.Value.(*entry).value.(int)
 		ee.Value.(*entry).value = counter + 1
+		c.Unlock()
 		return counter + 1
 	}
 
-    // 1st element
+	// 1st element
 	ele := c.ll.PushFront(&entry{key, 1})
 	c.cache[key] = ele
 	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
@@ -122,19 +113,16 @@ func (c *LruCache) Inc(key Key) (value int) {
 		c.removeOldest()
 	}
 
-    return 1
+	c.Unlock()
+	return 1
 }
 
 func (c *LruCache) Del(key Key) {
 	c.Lock()
-	defer c.Unlock()
-
-	if c.cache == nil {
-		return
-	}
 	if ele, hit := c.cache[key]; hit {
 		c.removeElement(ele)
 	}
+	c.Unlock()
 }
 
 // RemoveOldest removes the oldest item from the cache.
