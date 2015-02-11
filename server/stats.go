@@ -40,7 +40,7 @@ func RunSysStats(startedAt time.Time, interval time.Duration) {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
-		log.Info("ver:%s, since:%s, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:{%3.2f%%us, %3.2f%%sy}",
+		log.Info("ver:%s, since:%s, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s %s} cpu:{%3.2f%%us, %3.2f%%sy}",
 			BuildID,
 			time.Since(startedAt),
 			runtime.NumGoroutine(),
@@ -51,6 +51,7 @@ func RunSysStats(startedAt time.Time, interval time.Duration) {
 			gofmt.ByteSize(ms.HeapAlloc),    // bytes currently allocated in the heap
 			gofmt.ByteSize(ms.HeapIdle),     // bytes in the heap that are unused
 			gofmt.ByteSize(ms.HeapReleased), // bytes returned to the operating system, 5m for scavenger
+			gofmt.Comma(int64(ms.HeapObjects)),
 			userCpuUtil,
 			sysCpuUtil)
 
