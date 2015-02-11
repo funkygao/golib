@@ -110,8 +110,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		}
 
 		this.waitCount.Add(1)
-		log.Warn("ResourcePool[%s] empty ready, pending: %d",
-			this.name, this.WaitCount())
+		log.Warn("ResourcePool[%s] busy, pending:%d waited:%s",
+			this.name, this.WaitCount(), this.waitTime.Get())
 
 		t1 := time.Now()
 		wrapper, ok = <-this.resourcePool
