@@ -50,10 +50,12 @@ func SetupLogging(logFile, logLevel, crashLogFile, alarmSockPath, alarmTag strin
 		filer.SetRotateDaily(true)
 		log.AddFilter("file", level, filer)
 
-		if alarmer, err := log.NewSyslogNgWriter(alarmSockPath, alarmTag); err != nil {
-			log.Error("syslogng writer: %s", err.Error())
-		} else {
-			log.AddFilter("alarm", log.ALARM, alarmer)
+		if alarmTag != "" && alarmSockPath != "" {
+			if alarmer, err := log.NewSyslogNgWriter(alarmSockPath, alarmTag); err != nil {
+				log.Error("syslogng writer: %s", err.Error())
+			} else {
+				log.AddFilter("alarm", log.ALARM, alarmer)
+			}
 		}
 	}
 
