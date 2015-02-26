@@ -23,10 +23,22 @@ func BenchmarkStringWithHack(b *testing.B) {
 func BenchmarkStringWithStringArena(b *testing.B) {
 	b.ReportAllocs()
 	ba := []byte{'h', 'e', 'l', 'l', 'o'}
-	sa := NewStringArena(len(ba) + 1)
+	sa := NewStringArena(len(ba))
 	for i := 0; i < b.N; i++ {
 		sa.NewString(ba)
 	}
+}
+
+func BenchmarkAppendVariant(b *testing.B) {
+	var ba [100]byte
+	b.ReportAllocs()
+	y := []byte{'h', 'e', 'l', 'l', 'o'}
+	for i := 0; i < b.N; i++ {
+		x := ba[:0]
+		x = append(x, y...)
+		_ = x
+	}
+	b.SetBytes(int64(len(y)))
 }
 
 func BenchmarkByteWithoutHack(b *testing.B) {
