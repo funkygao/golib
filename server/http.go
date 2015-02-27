@@ -7,8 +7,10 @@ import (
 	"io"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
+
+	_ "expvar" // localhost:xx/debug/vars
+	_ "net/http/pprof"
 )
 
 var (
@@ -39,11 +41,11 @@ func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
 		return err
 	}
 
-    if debugAddr != "" {
-	    log.Debug("HTTP serving at %s with pprof at %s", listenAddr, debugAddr)
-    } else {
-	    log.Debug("HTTP serving at %s", listenAddr)
-    }
+	if debugAddr != "" {
+		log.Debug("HTTP serving at %s with pprof at %s", listenAddr, debugAddr)
+	} else {
+		log.Debug("HTTP serving at %s", listenAddr)
+	}
 
 	go api.httpServer.Serve(api.httpListener)
 	if debugAddr != "" {
