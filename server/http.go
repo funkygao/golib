@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	_ "expvar" // localhost:xx/debug/vars
-	_ "net/http/pprof"
+	_ "expvar"         // localhost:xx/debug/vars
+	_ "net/http/pprof" // localhost:xx/debug/pprof
 )
 
 var (
