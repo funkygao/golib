@@ -35,7 +35,7 @@ func (this *DiagnosticTracker) ReturnResource(r Resource) {
 	this.mutex.Unlock()
 }
 
-func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
+func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout time.Duration) {
 	if interval == 0 {
 		log.Warn("ResourcePool[%s] diagnostic disabled", this.pool.name)
 		return
@@ -55,7 +55,7 @@ func (this *DiagnosticTracker) Run(interval time.Duration, borrowTimeout int) {
 
 			if borrowTimeout > 0 {
 				for _, r := range this.outstandings {
-					if int(time.Now().Sub(r.timeUsed).Seconds()) > borrowTimeout {
+					if time.Now().Sub(r.timeUsed) > borrowTimeout {
 						log.Warn("ResourcePool[%s] resource:%d killed: borrowed too long",
 							this.pool.name, r.resource.Id())
 
