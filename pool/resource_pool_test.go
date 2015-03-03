@@ -50,7 +50,7 @@ func SlowFailFactory() (Resource, error) {
 func TestOpen(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestOpen", PoolFactory, 6, 6, time.Second)
+	p := NewResourcePool("TestOpen", PoolFactory, 6, 6, time.Second, 0, 0)
 	p.SetCapacity(5)
 	var resources [10]Resource
 
@@ -227,7 +227,7 @@ func TestOpen(t *testing.T) {
 func TestShrinking(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestShrinking", PoolFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestShrinking", PoolFactory, 5, 5, time.Second, 0, 0)
 	var resources [10]Resource
 	// Leave one empty slot in the pool
 	for i := 0; i < 4; i++ {
@@ -371,7 +371,7 @@ func TestShrinking(t *testing.T) {
 func TestClosing(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestClosing", PoolFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestClosing", PoolFactory, 5, 5, time.Second, 0, 0)
 	var resources [10]Resource
 	for i := 0; i < 5; i++ {
 		r, err := p.Get()
@@ -424,7 +424,7 @@ func TestClosing(t *testing.T) {
 func TestIdleTimeout(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestIdleTimeout", PoolFactory, 1, 1, 10*time.Nanosecond)
+	p := NewResourcePool("TestIdleTimeout", PoolFactory, 1, 1, 10*time.Nanosecond, 0, 0)
 	defer p.Close()
 
 	r, err := p.Get()
@@ -455,7 +455,7 @@ func TestIdleTimeout(t *testing.T) {
 func TestCreateFail(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestCreateFail", FailFactory, 5, 5, time.Second)
+	p := NewResourcePool("TestCreateFail", FailFactory, 5, 5, time.Second, 0, 0)
 	defer p.Close()
 	if _, err := p.Get(); err.Error() != "Failed" {
 		t.Errorf("Expecting Failed, received %v", err)
@@ -470,7 +470,7 @@ func TestCreateFail(t *testing.T) {
 func TestSlowCreateFail(t *testing.T) {
 	lastId.Set(0)
 	count.Set(0)
-	p := NewResourcePool("TestSlowCreateFail", SlowFailFactory, 2, 2, time.Second)
+	p := NewResourcePool("TestSlowCreateFail", SlowFailFactory, 2, 2, time.Second, 0, 0)
 	defer p.Close()
 	ch := make(chan bool)
 	// The third Get should not wait indefinitely
