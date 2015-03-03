@@ -94,11 +94,15 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 	}
 
 	var (
-		wrapper resourceWrapper
-		ok      bool
+		wrapper   resourceWrapper
+		stillOpen bool
 	)
 	select {
-	case wrapper, ok = <-this.resourcePool:
+	case wrapper, stillOpen = <-this.resourcePool:
+		if !stillOpen {
+			return nil, CLOSED_ERR
+		}
+
 		this.waitCount.Set(0) // reset
 		if wrapper.resource != nil {
 			this.diagnosticTracker.BorrowResource(wrapper.resource)
@@ -114,12 +118,8 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 			this.name, this.WaitCount(), this.waitTime.Get())
 
 		t1 := time.Now()
-		wrapper, ok = <-this.resourcePool
+		wrapper = <-this.resourcePool
 		this.waitTime.Add(time.Now().Sub(t1))
-	}
-
-	if !ok {
-		return nil, CLOSED_ERR
 	}
 
 	// Close the aged idle resource
