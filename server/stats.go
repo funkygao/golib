@@ -41,7 +41,7 @@ func RunSysStats(startedAt time.Time, interval time.Duration) {
 		lastSysTime = sysTime
 
 		log.Info("ver:%s, since:%s, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s %s} cpu:{%3.2f%%us, %3.2f%%sy}",
-			BuildID,
+			BuildId,
 			time.Since(startedAt),
 			runtime.NumGoroutine(),
 			ms.PauseTotalNs/nsInMs,
