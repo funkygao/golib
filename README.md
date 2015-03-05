@@ -8,3 +8,4 @@ golang common facilities lib
 ### TODO
 
 * [ ] tweak performance of cache.LruCache
+* [ ] merge mutexmap with cmap, lur cache will be sharded
