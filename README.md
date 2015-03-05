@@ -7,4 +7,5 @@ golang common facilities lib
 
 ### TODO
 
+* [ ] hot reload mechanism in server pkg
 * [ ] tweak performance of cache.LruCache
