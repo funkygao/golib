@@ -11,3 +11,4 @@ golang common facilities lib
 * [ ] merge mutexmap with cmap, lur cache will be sharded
 * [ ] merge pqueue and gopqueue for priority queue
 * [ ] merge recycler and slab pkg
+* [ ] str pkg StringBuilder for better performance
