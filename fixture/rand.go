@@ -4,14 +4,19 @@ import (
 	"math/rand"
 )
 
-func RandomString(l int) string {
-	return string(RandomByteSlice(l))
+const (
+	minChar = '!'
+	maxChar = '~'
+)
+
+func RandomString(size int) string {
+	return string(RandomByteSlice(size))
 }
 
-func RandomByteSlice(l int) []byte {
-	bytes := make([]byte, l)
-	for i := 0; i < l; i++ {
-		bytes[i] = byte(65 + rand.Intn(90-65))
+func RandomByteSlice(size int) []byte {
+	bytes := make([]byte, size)
+	for i := 0; i < size; i++ {
+		bytes[i] = minChar + byte(rand.Intn(int(maxChar-minChar)))
 	}
 	return bytes
 }
