@@ -28,10 +28,15 @@ type LruCache struct {
 // If maxEntries is zero, the cache has no limit and it's assumed
 // that eviction is done by the caller.
 func NewLruCache(maxEntries int) *LruCache {
+    const M = 1 << 20
+    var initialSize = maxEntries
+    if maxEntries > M {
+        initialSize = M
+    }
 	return &LruCache{
 		MaxEntries: maxEntries,
 		ll:         list.New(),
-		cache:      make(map[interface{}]*list.Element, maxEntries),
+		cache:      make(map[interface{}]*list.Element, initialSize),
 		Mutex:      new(sync.Mutex),
 	}
 }
