@@ -1,6 +1,7 @@
 package cmap
 
 import (
+	"github.com/funkygao/golib/fixture"
 	"hash/fnv"
 	"testing"
 )
@@ -13,17 +14,21 @@ func BenchmarkHashFnvNew32(b *testing.B) {
 }
 
 func BenchmarkGetShard(b *testing.B) {
+	cm := New()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-
+		cm.GetShard("user.121212")
 	}
 }
 
 func BenchmarkSetAndGetWithShard32(b *testing.B) {
-	const key = "key"
 	cm := New()
+	for i := 0; i < ('~'-'!')*('~'-'!'); i++ {
+		cm.Set(fixture.RandomString(2), 1)
+	}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
+		key := fixture.RandomString(2)
 		cm.Set(key, 1)
 		_, _ = cm.Get(key)
 	}
@@ -31,10 +36,13 @@ func BenchmarkSetAndGetWithShard32(b *testing.B) {
 
 func BenchmarkSetAndGetWithShard1(b *testing.B) {
 	SHARD_COUNT = 1
-	const key = "key"
 	cm := New()
+	for i := 0; i < ('~'-'!')*('~'-'!'); i++ {
+		cm.Set(fixture.RandomString(2), 1)
+	}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
+		key := fixture.RandomString(2)
 		cm.Set(key, 1)
 		_, _ = cm.Get(key)
 	}
@@ -42,10 +50,14 @@ func BenchmarkSetAndGetWithShard1(b *testing.B) {
 
 func BenchmarkNotSafeMap(b *testing.B) {
 	m := make(map[string]interface{})
+	for i := 0; i < ('~'-'!')*('~'-'!'); i++ {
+		m[fixture.RandomString(2)] = 1
+	}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		m["key"] = 1
-		_, _ = m["key"]
+		key := fixture.RandomString(2)
+		m[key] = 1
+		_, _ = m[key]
 	}
 }
 
