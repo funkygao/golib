@@ -9,3 +9,4 @@ golang common facilities lib
 
 * [ ] tweak performance of cache.LruCache
 * [ ] merge mutexmap with cmap, lur cache will be sharded
+* [ ] merge pqueue and gopqueue for priority queue
