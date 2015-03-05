@@ -3,8 +3,10 @@ package signal
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 )
@@ -63,6 +65,34 @@ func Kill(sigs ...os.Signal) error {
 		}
 	}
 
+	return nil
+}
+
+func findProcess(pidFile string) (p *os.Process, err error) {
+	pidBody, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return nil, err
+	}
+
+	pid, err := strconv.Atoi(string(pidBody))
+	if err != nil {
+		return nil, err
+	}
+
+	return os.FindProcess(pid)
+}
+
+func KillProcess(pidFile string) error {
+	process, err := findProcess(pidFile)
+	if err != nil {
+		return err
+	}
+
+	if err = process.Kill(); err != nil {
+		return err
+	}
+
+	syscall.Unlink(pidFile)
 	return nil
 }
 
