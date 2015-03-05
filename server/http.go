@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	log "github.com/funkygao/log4go"
 	"github.com/gorilla/mux"
 	"io"
@@ -14,7 +15,9 @@ import (
 )
 
 var (
-	api *httpRestApi
+	httpApi       *httpRestApi
+	httpDupLaunch = errors.New("server.LaunchHttpServer already called")
+	ErrHttp404    = errors.New("Not found")
 )
 
 type httpRestApi struct {
@@ -24,20 +27,22 @@ type httpRestApi struct {
 	httpPaths    []string
 }
 
-func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
-	if api != nil {
-		return nil
+func LaunchHttpServer(listenAddr string, debugAddr string) (err error) {
+	if httpApi != nil {
+		return httpDupLaunch
 	}
 
-	api = new(httpRestApi)
-	api.httpPaths = make([]string, 0, 10)
-	api.httpRouter = mux.NewRouter()
-	api.httpServer = &http.Server{Addr: listenAddr,
-		Handler: api.httpRouter}
+	httpApi = new(httpRestApi)
+	httpApi.httpPaths = make([]string, 0, 10)
+	httpApi.httpRouter = mux.NewRouter()
+	httpApi.httpServer = &http.Server{
+		Addr:    listenAddr,
+		Handler: httpApi.httpRouter,
+	}
 
-	api.httpListener, err = net.Listen("tcp", api.httpServer.Addr)
+	httpApi.httpListener, err = net.Listen("tcp", httpApi.httpServer.Addr)
 	if err != nil {
-		api = nil
+		httpApi = nil
 		return err
 	}
 
@@ -47,7 +52,7 @@ func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
 		log.Debug("HTTP serving at %s", listenAddr)
 	}
 
-	go api.httpServer.Serve(api.httpListener)
+	go httpApi.httpServer.Serve(httpApi.httpListener)
 	if debugAddr != "" {
 		go http.ListenAndServe(debugAddr, nil)
 	}
@@ -55,17 +60,13 @@ func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
 	return nil
 }
 
-func StopHttpServ() {
-	if api != nil && api.httpListener != nil {
-		api.httpListener.Close()
-		api.httpListener = nil
+func StopHttpServer() {
+	if httpApi != nil && httpApi.httpListener != nil {
+		httpApi.httpListener.Close()
+		httpApi.httpListener = nil
 
 		log.Info("HTTP server stopped")
 	}
-}
-
-func Launched() bool {
-	return api != nil
 }
 
 func RegisterHttpApi(path string,
@@ -77,7 +78,7 @@ func RegisterHttpApi(path string,
 			t1  = time.Now()
 		)
 
-		params, err := api.decodeHttpParams(w, req)
+		params, err := httpApi.decodeHttpParams(w, req)
 		if err == nil {
 			ret, err = handlerFunc(w, req, params)
 		} else {
@@ -120,9 +121,13 @@ func RegisterHttpApi(path string,
 		}
 	}
 
+	if httpApi == nil {
+		panic("call server.LaunchHttpServer before server.RegisterHttpApi")
+	}
+
 	// path can't be duplicated
 	isDup := false
-	for _, p := range api.httpPaths {
+	for _, p := range httpApi.httpPaths {
 		if p == path {
 			log.Error("REST[%s] already registered", path)
 			isDup = true
@@ -131,14 +136,14 @@ func RegisterHttpApi(path string,
 	}
 
 	if !isDup {
-		api.httpPaths = append(api.httpPaths, path)
+		httpApi.httpPaths = append(httpApi.httpPaths, path)
 	}
 
-	return api.httpRouter.HandleFunc(path, wrappedFunc)
+	return httpApi.httpRouter.HandleFunc(path, wrappedFunc)
 }
 
 func UnregisterAllHttpApi() {
-	api.httpPaths = api.httpPaths[:0]
+	httpApi.httpPaths = httpApi.httpPaths[:0]
 }
 
 func (this *httpRestApi) decodeHttpParams(w http.ResponseWriter,
