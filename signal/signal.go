@@ -55,7 +55,7 @@ func IgnoreSignal(sig ...os.Signal) {
 	}
 }
 
-// Send a signal to current running process
+// Send a signal to current running process.
 func Kill(sigs ...os.Signal) error {
 	for _, sig := range sigs {
 		select {
@@ -82,23 +82,18 @@ func findProcess(pidFile string) (p *os.Process, err error) {
 	return os.FindProcess(pid)
 }
 
-func KillProcess(pidFile string) error {
-	process, err := findProcess(pidFile)
+// Send a signal to a process by pid.
+func SignalProcess(pid int, sig os.Signal) error {
+	p, err := os.FindProcess(pid)
 	if err != nil {
 		return err
 	}
 
-	if err = process.Kill(); err != nil {
-		return err
-	}
-
-	syscall.Unlink(pidFile)
-	return nil
+	return p.Signal(sig)
 }
 
-// Send a signal to a process by pid.
-func SignalProcess(pid int, sig os.Signal) error {
-	p, err := os.FindProcess(pid)
+func SignalProcessByPidFile(pidFile string, sig os.Signal) error {
+	p, err := findProcess(pidFile)
 	if err != nil {
 		return err
 	}
