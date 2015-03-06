@@ -66,7 +66,8 @@ func SetupLogging(logFile, logLevel, crashLogFile, alarmSockPath, alarmTag strin
 		}
 
 		syscall.Dup2(int(f.Fd()), 2)
-		fmt.Fprintf(os.Stderr, "\n%s %s (build: %s)\n===================\n", time.Now().String(),
+		fmt.Fprintf(os.Stderr, "\n%s %s (build: %s)\n===================\n",
+			time.Now().String(),
 			Version, BuildId)
 	}
 
