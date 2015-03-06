@@ -17,9 +17,6 @@ type Server struct {
 	StartedAt time.Time
 	pid       int
 	hostname  string
-
-	configFile         string
-	configFileLastStat os.FileInfo
 }
 
 func NewServer(name string) (this *Server) {
@@ -31,7 +28,6 @@ func NewServer(name string) (this *Server) {
 
 func (this *Server) LoadConfig(fn string) *Server {
 	log.Info("Server[%s %s@%s] loading config file: %s", this.Name, BuildId, Version, fn)
-	this.configFile = fn
 
 	var err error
 	this.Conf, err = conf.Load(fn)
@@ -40,23 +36,6 @@ func (this *Server) LoadConfig(fn string) *Server {
 	}
 
 	return this
-}
-
-// Hot reload of config file
-func (this *Server) WatchConfig(interval time.Duration, ch chan *conf.Conf) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for _ = range ticker.C {
-		stat, _ := os.Stat(this.configFile)
-		if stat.ModTime() != this.configFileLastStat.ModTime() {
-			this.configFileLastStat = stat
-
-			cf := this.LoadConfig(this.configFile)
-			log.Info("config[%s] reloaded", this.configFile)
-			ch <- cf.Conf
-		}
-	}
 }
 
 func (this *Server) Launch() {
