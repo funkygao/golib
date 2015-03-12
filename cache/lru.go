@@ -10,7 +10,8 @@ type LruCache struct {
 	Cacheable
 	HasLength
 
-	lock sync.RWMutex // not embedded because lock is transparent for caller
+	// not embedded because lock is transparent for caller
+	lock sync.RWMutex
 
 	// maxItems is the maximum number of cache entries before
 	// an item is evicted. Zero means no limit.
@@ -20,6 +21,10 @@ type LruCache struct {
 	// OnEvicted optionally specificies a callback function to be
 	// executed when an entry is purged from the cache.
 	OnEvicted func(key Key, value interface{})
+
+	// OnMiss optionally specify a callback function to be called
+	// when Get a key missed.
+	OnGetMiss func(key Key)
 
 	ll    *list.List // double linked list
 	items map[interface{}]*list.Element
@@ -83,6 +88,8 @@ func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 		c.ll.MoveToFront(item)
 		c.lock.RUnlock()
 		return item.Value.(*entry).value, true
+	} else if c.OnGetMiss != nil {
+		c.OnGetMiss(key)
 	}
 
 	c.lock.RUnlock()
