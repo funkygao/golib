@@ -1,9 +1,8 @@
 package cache
 
 import (
-    "github.com/funkygao/assert"
-	"fmt"
-	"math/rand"
+	"github.com/funkygao/assert"
+	"reflect"
 	"testing"
 )
 
@@ -60,41 +59,32 @@ func TestDel(t *testing.T) {
 }
 
 func TestInc(t *testing.T) {
-    lru := NewLruCache(10)
-    counter := lru.Inc("foo")
-    assert.Equal(t, 1, counter)
-    counter = lru.Inc("foo")
-    assert.Equal(t, 2, counter)
-    lru.Del("foo")
-    counter = lru.Inc("foo")
-    assert.Equal(t, 1, counter)
+	lru := NewLruCache(10)
+	counter := lru.Inc("foo")
+	assert.Equal(t, 1, counter)
+	counter = lru.Inc("foo")
+	assert.Equal(t, 2, counter)
+	lru.Del("foo")
+	counter = lru.Inc("foo")
+	assert.Equal(t, 1, counter)
 }
 
-func BenchmarkCreateKey(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		fmt.Sprintf("mc_stress:%d", rand.Int())
-	}
-}
-
-func BenchmarkSet(b *testing.B) {
-	b.ReportAllocs()
+func TestLenAndPurge(t *testing.T) {
 	lru := NewLruCache(0)
-	var key string
-	for i := 0; i < b.N; i++ {
-		key = fmt.Sprintf("mc_stress:%d", rand.Int())
-		lru.Set(key, 5)
-	}
-	b.SetBytes(int64(len(key)))
+	assert.Equal(t, 0, lru.Len())
+	lru.Set("myKey", 1234)
+	assert.Equal(t, 1, lru.Len())
+	lru.Purge()
+	assert.Equal(t, 0, lru.Len())
+	assert.Equal(t, 0, lru.MaxItems())
 }
 
-func BenchmarkGet(b *testing.B) {
-	b.ReportAllocs()
+func TestKeys(t *testing.T) {
 	lru := NewLruCache(0)
-	var key string
-	for i := 0; i < b.N; i++ {
-		key = fmt.Sprintf("mc_stress:%d", rand.Int())
-		lru.Set(key, 5)
-		lru.Get(key)
-	}
-	b.SetBytes(int64(len(key)))
+	lru.Set("myKey", 1234)
+	lru.Inc("boo")
+	keys := lru.Keys()
+	reflect.DeepEqual(keys, []interface{}{"myKey", "boo"})
+	assert.Equal(t, true, reflect.DeepEqual(keys, []interface{}{"myKey", "boo"}) ||
+		reflect.DeepEqual(keys, []interface{}{"boo", "myKey"}))
 }
