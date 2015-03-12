@@ -30,7 +30,7 @@ func (c SLruCache) GetShard(key Key) *LruCache {
 		return c[uint(hasher.Sum32())%uint(SHARD_COUNT)]
 	}
 
-	return c[0] // unable to shard
+	return c[0] // unable to shard, always use the 1st slot
 }
 
 func (c SLruCache) Purge() {

@@ -89,6 +89,14 @@ func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 	return
 }
 
+func (c *LruCache) Del(key Key) {
+	c.lock.Lock()
+	if item, hit := c.items[key]; hit {
+		c.removeElement(item)
+	}
+	c.lock.Unlock()
+}
+
 // Keys return active keys in the cache.
 // Order is not garranteed.
 func (c *LruCache) Keys() []interface{} {
@@ -149,14 +157,6 @@ func (c *LruCache) Inc(key Key) (value int) {
 
 	c.lock.Unlock()
 	return 1
-}
-
-func (c *LruCache) Del(key Key) {
-	c.lock.Lock()
-	if item, hit := c.items[key]; hit {
-		c.removeElement(item)
-	}
-	c.lock.Unlock()
 }
 
 // Len returns the number of items in the cache.
