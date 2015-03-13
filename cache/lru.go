@@ -83,16 +83,18 @@ func (c *LruCache) Set(key Key, value interface{}) {
 // Get looks up a key's value from the cache.
 func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 	c.lock.RLock()
+	item, hit := c.items[key]
+	c.lock.RUnlock()
 
-	if item, hit := c.items[key]; hit {
+	if hit {
+		c.lock.Lock()
 		c.ll.MoveToFront(item)
-		c.lock.RUnlock()
+		c.lock.Unlock()
 		return item.Value.(*entry).value, true
 	} else if c.OnGetMiss != nil {
 		c.OnGetMiss(key)
 	}
 
-	c.lock.RUnlock()
 	return
 }
 
