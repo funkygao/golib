@@ -14,4 +14,5 @@ golang common facilities lib
 * [ ] str pkg StringBuilder for better performance
 * [X] shard lru cache to lower mutex race
 * [ ] replace lru cache container/list with slice
+  - https://github.com/golang/go/wiki/SliceTricks
 * [ ] https://github.com/dgryski/go-clockpro
