@@ -13,3 +13,4 @@ golang common facilities lib
 * [ ] merge recycler and slab pkg
 * [ ] str pkg StringBuilder for better performance
 * [ ] shard lru cache to lower mutex race
+* [ ] https://github.com/dgryski/go-clockpro
