@@ -8,12 +8,12 @@ package queue
 // The size of a block of data
 const blockSize = 4096
 
-// First in, first out data structure.
+// FIFO data structure not goroutine safe.
 type Queue struct {
-	tailIdx int
-	headIdx int
-	tailOff int
-	headOff int
+	tailIndex  int
+	headIndex  int
+	tailOffset int
+	headOffset int
 
 	blocks [][]interface{}
 	head   []interface{}
@@ -31,66 +31,66 @@ func New() *Queue {
 
 // Pushes a new element into the queue, expanding it if necessary.
 func (q *Queue) Push(data interface{}) {
-	q.tail[q.tailOff] = data
-	q.tailOff++
-	if q.tailOff == blockSize {
-		q.tailOff = 0
-		q.tailIdx = (q.tailIdx + 1) % len(q.blocks)
+	q.tail[q.tailOffset] = data
+	q.tailOffset++
+	if q.tailOffset == blockSize {
+		q.tailOffset = 0
+		q.tailIndex = (q.tailIndex + 1) % len(q.blocks)
 
 		// If we wrapped over to the end, insert a new block and update indices
-		if q.tailIdx == q.headIdx {
+		if q.tailIndex == q.headIndex {
 			buffer := make([][]interface{}, len(q.blocks)+1)
-			copy(buffer[:q.tailIdx], q.blocks[:q.tailIdx])
-			buffer[q.tailIdx] = make([]interface{}, blockSize)
-			copy(buffer[q.tailIdx+1:], q.blocks[q.tailIdx:])
+			copy(buffer[:q.tailIndex], q.blocks[:q.tailIndex])
+			buffer[q.tailIndex] = make([]interface{}, blockSize)
+			copy(buffer[q.tailIndex+1:], q.blocks[q.tailIndex:])
 			q.blocks = buffer
-			q.headIdx++
-			q.head = q.blocks[q.headIdx]
+			q.headIndex++
+			q.head = q.blocks[q.headIndex]
 		}
-		q.tail = q.blocks[q.tailIdx]
+		q.tail = q.blocks[q.tailIndex]
 	}
 }
 
 // Pops out an element from the queue. Note, no bounds checking are done.
 func (q *Queue) Pop() (res interface{}) {
-	res, q.head[q.headOff] = q.head[q.headOff], nil
-	q.headOff++
-	if q.headOff == blockSize {
-		q.headOff = 0
-		q.headIdx = (q.headIdx + 1) % len(q.blocks)
-		q.head = q.blocks[q.headIdx]
+	res, q.head[q.headOffset] = q.head[q.headOffset], nil
+	q.headOffset++
+	if q.headOffset == blockSize {
+		q.headOffset = 0
+		q.headIndex = (q.headIndex + 1) % len(q.blocks)
+		q.head = q.blocks[q.headIndex]
 	}
 	return
 }
 
 // Returns the first element in the queue. Note, no bounds checking are done.
 func (q *Queue) Front() interface{} {
-	return q.head[q.headOff]
+	return q.head[q.headOffset]
 }
 
 // Checks whether the queue is empty.
 func (q *Queue) Empty() bool {
-	return q.headIdx == q.tailIdx && q.headOff == q.tailOff
+	return q.headIndex == q.tailIndex && q.headOffset == q.tailOffset
 }
 
 // Returns the number of elements in the queue.
 func (q *Queue) Size() int {
-	if q.tailIdx > q.headIdx {
-		return (q.tailIdx-q.headIdx)*blockSize - q.headOff + q.tailOff
-	} else if q.tailIdx < q.headIdx {
-		return (len(q.blocks)-q.headIdx+q.tailIdx)*blockSize - q.headOff + q.tailOff
+	if q.tailIndex > q.headIndex {
+		return (q.tailIndex-q.headIndex)*blockSize - q.headOffset + q.tailOffset
+	} else if q.tailIndex < q.headIndex {
+		return (len(q.blocks)-q.headIndex+q.tailIndex)*blockSize - q.headOffset + q.tailOffset
 	} else {
-		return q.tailOff - q.headOff
+		return q.tailOffset - q.headOffset
 	}
 }
 
 // Clears out the contents of the queue.
 func (q *Queue) Reset() {
 	// Rewind the queue indices
-	q.headIdx = 0
-	q.tailIdx = 0
-	q.headOff = 0
-	q.tailOff = 0
+	q.headIndex = 0
+	q.tailIndex = 0
+	q.headOffset = 0
+	q.tailOffset = 0
 
 	// Reset the active blocks
 	q.head = q.blocks[0]

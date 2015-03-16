@@ -65,21 +65,3 @@ func TestReset(t *testing.T) {
 		}
 	}
 }
-
-func BenchmarkPush(b *testing.B) {
-	queue := New()
-	for i := 0; i < b.N; i++ {
-		queue.Push(i)
-	}
-}
-
-func BenchmarkPop(b *testing.B) {
-	queue := New()
-	for i := 0; i < b.N; i++ {
-		queue.Push(i)
-	}
-	b.ResetTimer()
-	for !queue.Empty() {
-		queue.Pop()
-	}
-}
