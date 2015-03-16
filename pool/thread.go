@@ -1,15 +1,14 @@
-// This file contains a thread pool implementation that allows tasks to be
-// scheduled and executes them concurrently, but making sure that at all times a
-// limited number of threads exist.
-
 package pool
 
 import (
 	"errors"
+	"github.com/funkygao/golib/container/queue"
 	"sync"
 )
 
-var ErrTerminating = errors.New("pool terminating")
+var (
+	ErrTerminating = errors.New("thread pool terminating")
+)
 
 // A task function meant to be started as a go routine.
 type Task func()
@@ -22,8 +21,8 @@ type ThreadPool struct {
 	idle  int // Number of idle workers (i.e. not running)
 	total int // Maximum pool worker capacity
 
-	start bool // Whether the pool was already started
-	quit  bool // Whether the pool was already terminated
+	started bool // Whether the pool was already started
+	quit    bool // Whether the pool was already terminated
 
 	mutex sync.Mutex
 	done  *sync.Cond
@@ -45,13 +44,16 @@ func (t *ThreadPool) Start() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if !t.start {
-		for i := 0; i < t.total && !t.tasks.Empty(); i++ {
-			t.idle--
-			go t.runner(t.tasks.Pop().(Task))
-		}
-		t.start = true
+	if t.started {
+		return
 	}
+
+	for i := 0; i < t.total && !t.tasks.Empty(); i++ {
+		t.idle--
+		go t.runner(t.tasks.Pop().(Task))
+	}
+	t.started = true
+
 }
 
 // Waits for all threads to finish, terminating the whole pool afterwards. No
@@ -68,6 +70,7 @@ func (t *ThreadPool) Terminate(clear bool) {
 	for t.idle < t.total {
 		t.done.Wait()
 	}
+
 	// Zero out the task queue, which could have reached a significant size
 	t.tasks = nil
 }
@@ -77,12 +80,11 @@ func (t *ThreadPool) Schedule(task Task) error {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	// If terminating, return so
 	if t.quit {
 		return ErrTerminating
 	}
 
-	if t.start && t.idle > 0 {
+	if t.started && t.idle > 0 {
 		t.idle--
 		go t.runner(task)
 	} else {
@@ -116,6 +118,7 @@ func (t *ThreadPool) runner(task Task) {
 		t.mutex.Unlock()
 		t.done.Broadcast()
 	}()
+
 	// Execute all tasks that are available
 	for ; task != nil; task = t.next() {
 		task()
