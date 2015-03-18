@@ -6,15 +6,15 @@ import (
 )
 
 const (
-	SHARD_COUNT = 32
+	shardN = 32
 )
 
 // Sharded LruCache.
 type SLruCache []*LruCache
 
 func NewSLruCache(maxItems int) SLruCache {
-	c := make(SLruCache, SHARD_COUNT)
-	for i := 0; i < SHARD_COUNT; i++ {
+	c := make(SLruCache, shardN)
+	for i := 0; i < shardN; i++ {
 		c[i] = NewLruCache(maxItems)
 	}
 	return c
@@ -27,7 +27,7 @@ func (c SLruCache) GetShard(key Key) *LruCache {
 	hasher := fnv.New32()
 	if k, ok := key.(string); ok {
 		hasher.Write(hack.Byte(k))
-		return c[uint(hasher.Sum32())%uint(SHARD_COUNT)]
+		return c[uint(hasher.Sum32())%uint(shardN)]
 	}
 
 	return c[0] // unable to shard, always use the 1st slot
@@ -39,15 +39,17 @@ func (c SLruCache) Purge() {
 	}
 }
 
-func (c SLruCache) MaxItems() int {
-	return c[0].MaxItems()
-}
-
 // Set adds a value to the cache.
 // If key already exists, its value gets overwritten.
 func (c SLruCache) Set(key Key, value interface{}) {
 	shard := c.GetShard(key)
 	shard.Set(key, value)
+}
+
+// Add will return true and set the key to cache if key not existent, else return false.
+func (c SLruCache) Add(key Key, value interface{}) bool {
+	shard := c.GetShard(key)
+	return shard.Add(key, value)
 }
 
 // Get looks up a key's value from the cache.
@@ -77,14 +79,9 @@ func (c SLruCache) Len() int {
 	return l
 }
 
-func (c SLruCache) Decr(key Key) (value int) {
+func (c SLruCache) Inc(key Key, delta int) (newVal int) {
 	shard := c.GetShard(key)
-	return shard.Decr(key)
-}
-
-func (c SLruCache) Inc(key Key) (value int) {
-	shard := c.GetShard(key)
-	return shard.Inc(key)
+	return shard.Inc(key, delta)
 }
 
 func (c SLruCache) Del(key Key) {

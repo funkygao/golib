@@ -54,10 +54,6 @@ func (c *LruCache) Purge() {
 	c.lock.Unlock()
 }
 
-func (c *LruCache) MaxItems() int {
-	return c.maxItems
-}
-
 // Set adds a value to the cache.
 // If key already exists, its value gets overwritten.
 func (c *LruCache) Set(key Key, value interface{}) {
@@ -70,14 +66,24 @@ func (c *LruCache) Set(key Key, value interface{}) {
 		return
 	}
 
-	item := c.ll.PushFront(&entry{key, value})
-	c.items[key] = item
-	if c.maxItems != 0 && c.ll.Len() > c.maxItems {
-		// evict olded element
-		c.removeOldest()
-	}
-
+	c.setElement(key, value)
 	c.lock.Unlock()
+}
+
+// Add will return true and set the key to cache if key not existent, else return false.
+func (c *LruCache) Add(key Key, value interface{}) bool {
+	c.lock.RLock()
+	if _, ok := c.items[key]; ok {
+		c.lock.RUnlock()
+		return false
+	}
+	c.lock.RUnlock()
+
+	// add a new item
+	c.lock.Lock()
+	c.setElement(key, value)
+	c.lock.Unlock()
+	return true
 }
 
 // Get looks up a key's value from the cache.
@@ -122,38 +128,15 @@ func (c *LruCache) Keys() []interface{} {
 	return keys
 }
 
-func (c *LruCache) Decr(key Key) (value int) {
+func (c *LruCache) Inc(key Key, delta int) (newVal int) {
 	c.lock.Lock()
 
 	if item, ok := c.items[key]; ok {
 		c.ll.MoveToFront(item)
 		counter := item.Value.(*entry).value.(int)
-		item.Value.(*entry).value = counter - 1
+		item.Value.(*entry).value = counter + delta
 		c.lock.Unlock()
-		return counter - 1
-	}
-
-	// 1st element
-	item := c.ll.PushFront(&entry{key, 0})
-	c.items[key] = item
-	if c.maxItems != 0 && c.ll.Len() > c.maxItems {
-		// evict olded element
-		c.removeOldest()
-	}
-
-	c.lock.Unlock()
-	return 0
-}
-
-func (c *LruCache) Inc(key Key) (value int) {
-	c.lock.Lock()
-
-	if item, ok := c.items[key]; ok {
-		c.ll.MoveToFront(item)
-		counter := item.Value.(*entry).value.(int)
-		item.Value.(*entry).value = counter + 1
-		c.lock.Unlock()
-		return counter + 1
+		return counter + delta
 	}
 
 	// 1st element
@@ -188,6 +171,15 @@ func (c *LruCache) removeOldest() {
 	}
 	if item := c.ll.Back(); item != nil {
 		c.removeElement(item)
+	}
+}
+
+func (c *LruCache) setElement(key Key, value interface{}) {
+	item := c.ll.PushFront(&entry{key, value})
+	c.items[key] = item
+	if c.maxItems != 0 && c.ll.Len() > c.maxItems {
+		// evict olded element
+		c.removeOldest()
 	}
 }
 
