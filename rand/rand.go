@@ -1,8 +1,11 @@
 package rand
 
 import (
+	crand "crypto/rand"
 	crypto_rand "crypto/rand"
 	"encoding/binary"
+	"encoding/hex"
+	"io"
 	"math/rand"
 )
 
@@ -27,4 +30,10 @@ func RandomByteSlice(size int) []byte {
 func NewPseudoSeed() (seed int64) {
 	binary.Read(crypto_rand.Reader, binary.LittleEndian, &seed)
 	return
+}
+
+func SizedString(size int) string {
+	u := make([]byte, size)
+	io.ReadFull(crand.Reader, u)
+	return hex.EncodeToString(u)
 }
