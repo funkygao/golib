@@ -9,7 +9,7 @@ const (
 	shardN = 32
 )
 
-// Sharded LruCache.
+// Sharded LruCache to lower contention in high load environment.
 type SLruCache []*LruCache
 
 func NewSLruCache(maxItems int) SLruCache {
