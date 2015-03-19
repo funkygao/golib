@@ -1,27 +1,37 @@
 package ip
 
 import (
+	"fmt"
 	"net"
-	"strings"
 )
 
-// 127.0.0.1 excluded
-func LocalIpv4Addrs() (ips []string) {
-	info, _ := net.InterfaceAddrs()
-	ips = make([]string, 0)
-	for _, addr := range info {
-		ip := strings.Split(addr.String(), "/")[0]
-		if strings.HasPrefix(ip, "127.0") {
-			continue
-		}
-
-		trial := net.ParseIP(ip)
-		if trial.To4() == nil {
-			continue
-		}
-
-		ips = append(ips, ip)
+// LocalIpv4Addrs scan all ip addresses with loopback excluded.
+func LocalIpv4Addrs() ([]string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
 	}
 
-	return
+	ips := make([]string, 0)
+	for _, addr := range addrs {
+		var ip net.IP
+		switch x := addr.(type) {
+		case *net.IPNet:
+			ip = x.IP
+		case *net.IPAddr:
+			ip = x.IP
+		default:
+			err = fmt.Errorf("unknown interface address type for: %+v", x)
+			return nil, err
+		}
+
+		if ip.IsLoopback() || ip.To4() == nil {
+			// loopback excluded, ipv6 excluded
+			continue
+		}
+
+		ips = append(ips, ip.String())
+	}
+
+	return ips, nil
 }

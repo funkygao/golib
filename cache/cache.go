@@ -13,6 +13,7 @@ type Cacheable interface {
 	Set(key Key, value interface{})
 	Get(key Key) (value interface{}, ok bool)
 	Del(key Key)
+	Add(key Key) bool
 }
 
 type HasLength interface {

@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-var ErrUnkownType = errors.New("unknown type")
+var (
+	ErrUnkownType = errors.New("unknown type")
+)
 
 type HllCounter struct {
 	Hll       *h.HyperLogLog

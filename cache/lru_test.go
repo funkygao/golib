@@ -1,9 +1,8 @@
 package cache
 
 import (
-    "github.com/funkygao/assert"
-	"fmt"
-	"math/rand"
+	"github.com/funkygao/assert"
+	"reflect"
 	"testing"
 )
 
@@ -31,7 +30,7 @@ var getTests = []struct {
 		complexStruct{1, simpleStruct{2, "three"}}, true},
 }
 
-func TestGet(t *testing.T) {
+func TestLruCacheGet(t *testing.T) {
 	for _, tt := range getTests {
 		lru := NewLruCache(0)
 		lru.Set(tt.keyToAdd, 1234)
@@ -44,7 +43,7 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestDel(t *testing.T) {
+func TestLruCacheDel(t *testing.T) {
 	lru := NewLruCache(0)
 	lru.Set("myKey", 1234)
 	if val, ok := lru.Get("myKey"); !ok {
@@ -59,42 +58,40 @@ func TestDel(t *testing.T) {
 	}
 }
 
-func TestInc(t *testing.T) {
-    lru := NewLruCache(10)
-    counter := lru.Inc("foo")
-    assert.Equal(t, 1, counter)
-    counter = lru.Inc("foo")
-    assert.Equal(t, 2, counter)
-    lru.Del("foo")
-    counter = lru.Inc("foo")
-    assert.Equal(t, 1, counter)
+func TestLruCacheInc(t *testing.T) {
+	lru := NewLruCache(10)
+	counter := lru.Inc("foo", 1)
+	assert.Equal(t, 1, counter)
+	counter = lru.Inc("foo", 1)
+	assert.Equal(t, 2, counter)
+	assert.Equal(t, 5, lru.Inc("foo", 3))
+	assert.Equal(t, 0, lru.Inc("foo", -5))
+	lru.Del("foo")
+	counter = lru.Inc("foo", 1)
+	assert.Equal(t, 1, counter)
 }
 
-func BenchmarkCreateKey(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		fmt.Sprintf("mc_stress:%d", rand.Int())
-	}
-}
-
-func BenchmarkSet(b *testing.B) {
-	b.ReportAllocs()
+func TestLruCacheLenAndPurge(t *testing.T) {
 	lru := NewLruCache(0)
-	var key string
-	for i := 0; i < b.N; i++ {
-		key = fmt.Sprintf("mc_stress:%d", rand.Int())
-		lru.Set(key, 5)
-	}
-	b.SetBytes(int64(len(key)))
+	assert.Equal(t, 0, lru.Len())
+	lru.Set("myKey", 1234)
+	assert.Equal(t, 1, lru.Len())
+	lru.Purge()
+	assert.Equal(t, 0, lru.Len())
 }
 
-func BenchmarkGet(b *testing.B) {
-	b.ReportAllocs()
+func TestLruCacheKeys(t *testing.T) {
 	lru := NewLruCache(0)
-	var key string
-	for i := 0; i < b.N; i++ {
-		key = fmt.Sprintf("mc_stress:%d", rand.Int())
-		lru.Set(key, 5)
-		lru.Get(key)
-	}
-	b.SetBytes(int64(len(key)))
+	lru.Set("myKey", 1234)
+	lru.Inc("boo", 1)
+	keys := lru.Keys()
+	reflect.DeepEqual(keys, []interface{}{"myKey", "boo"})
+	assert.Equal(t, true, reflect.DeepEqual(keys, []interface{}{"myKey", "boo"}) ||
+		reflect.DeepEqual(keys, []interface{}{"boo", "myKey"}))
+}
+
+func TestLruCacheAdd(t *testing.T) {
+	lru := NewLruCache(0)
+	assert.Equal(t, true, lru.Add("key", 1))
+	assert.Equal(t, false, lru.Add("key", 3))
 }

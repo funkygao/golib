@@ -10,148 +10,184 @@ type LruCache struct {
 	Cacheable
 	HasLength
 
-	*sync.Mutex
+	// not embedded because lock is transparent for caller
+	lock sync.RWMutex
 
-	// MaxEntries is the maximum number of cache entries before
+	// maxItems is the maximum number of cache entries before
 	// an item is evicted. Zero means no limit.
-	MaxEntries int
+	maxItems    int
+	initialSize int
 
 	// OnEvicted optionally specificies a callback function to be
 	// executed when an entry is purged from the cache.
 	OnEvicted func(key Key, value interface{})
 
+	// OnMiss optionally specify a callback function to be called
+	// when Get a key missed.
+	OnGetMiss func(key Key)
+
 	ll    *list.List // double linked list
-	cache map[interface{}]*list.Element
+	items map[interface{}]*list.Element
 }
 
 // New creates a new LruCache.
-// If maxEntries is zero, the cache has no limit and it's assumed
+// If maxItems is zero, the cache has no limit and it's assumed
 // that eviction is done by the caller.
-func NewLruCache(maxEntries int) *LruCache {
+func NewLruCache(maxItems int) *LruCache {
+	const M = 1 << 20
+	var sz = maxItems
+	if maxItems > M {
+		sz = M
+	}
 	return &LruCache{
-		MaxEntries: maxEntries,
-		ll:         list.New(),
-		cache:      make(map[interface{}]*list.Element, maxEntries),
-		Mutex:      new(sync.Mutex),
+		maxItems:    maxItems,
+		ll:          list.New(),
+		items:       make(map[interface{}]*list.Element, sz),
+		initialSize: sz,
 	}
 }
 
-// Add adds a value to the cache.
-func (c *LruCache) Set(key Key, value interface{}) {
-	c.Lock()
+func (c *LruCache) Purge() {
+	c.lock.Lock()
+	c.ll = list.New()
+	c.items = make(map[interface{}]*list.Element, c.initialSize)
+	c.lock.Unlock()
+}
 
-	if ee, ok := c.cache[key]; ok {
-		c.ll.MoveToFront(ee)
-		ee.Value.(*entry).value = value
-		c.Unlock()
+// Set adds a value to the cache.
+// If key already exists, its value gets overwritten.
+func (c *LruCache) Set(key Key, value interface{}) {
+	c.lock.Lock()
+
+	if item, ok := c.items[key]; ok {
+		c.ll.MoveToFront(item)
+		item.Value.(*entry).value = value
+		c.lock.Unlock()
 		return
 	}
 
-	ele := c.ll.PushFront(&entry{key, value})
-	c.cache[key] = ele
-	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
-		// evict olded element
-		c.removeOldest()
-	}
+	c.setElement(key, value)
+	c.lock.Unlock()
+}
 
-	c.Unlock()
+// Add will return true and set the key to cache if key not existent, else return false.
+func (c *LruCache) Add(key Key, value interface{}) bool {
+	c.lock.RLock()
+	if _, ok := c.items[key]; ok {
+		c.lock.RUnlock()
+		return false
+	}
+	c.lock.RUnlock()
+
+	// add a new item
+	c.lock.Lock()
+	c.setElement(key, value)
+	c.lock.Unlock()
+	return true
 }
 
 // Get looks up a key's value from the cache.
 func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
-	c.Lock()
+	c.lock.RLock()
+	item, hit := c.items[key]
+	c.lock.RUnlock()
 
-	if ele, hit := c.cache[key]; hit {
-		c.ll.MoveToFront(ele)
-		c.Unlock()
-		return ele.Value.(*entry).value, true
+	if hit {
+		c.lock.Lock()
+		c.ll.MoveToFront(item)
+		c.lock.Unlock()
+		return item.Value.(*entry).value, true
+	} else if c.OnGetMiss != nil {
+		c.OnGetMiss(key)
 	}
 
-	c.Unlock()
 	return
 }
 
-func (c *LruCache) Decr(key Key) (value int) {
-	c.Lock()
-
-	if ee, ok := c.cache[key]; ok {
-		c.ll.MoveToFront(ee)
-		counter := ee.Value.(*entry).value.(int)
-		ee.Value.(*entry).value = counter - 1
-		c.Unlock()
-		return counter - 1
+func (c *LruCache) Del(key Key) {
+	c.lock.Lock()
+	if item, hit := c.items[key]; hit {
+		c.removeElement(item)
 	}
-
-	// 1st element
-	ele := c.ll.PushFront(&entry{key, 0})
-	c.cache[key] = ele
-	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
-		// evict olded element
-		c.removeOldest()
-	}
-
-	c.Unlock()
-	return 0
+	c.lock.Unlock()
 }
 
-func (c *LruCache) Inc(key Key) (value int) {
-	c.Lock()
+// Keys return active keys in the cache.
+// Order is not garranteed.
+func (c *LruCache) Keys() []interface{} {
+	c.lock.RLock()
 
-	if ee, ok := c.cache[key]; ok {
-		c.ll.MoveToFront(ee)
-		counter := ee.Value.(*entry).value.(int)
-		ee.Value.(*entry).value = counter + 1
-		c.Unlock()
-		return counter + 1
+	keys := make([]interface{}, len(c.items))
+	i := 0
+	for k, _ := range c.items {
+		keys[i] = k
+		i++
+	}
+
+	c.lock.RUnlock()
+	return keys
+}
+
+func (c *LruCache) Inc(key Key, delta int) (newVal int) {
+	c.lock.Lock()
+
+	if item, ok := c.items[key]; ok {
+		c.ll.MoveToFront(item)
+		counter := item.Value.(*entry).value.(int)
+		item.Value.(*entry).value = counter + delta
+		c.lock.Unlock()
+		return counter + delta
 	}
 
 	// 1st element
-	ele := c.ll.PushFront(&entry{key, 1})
-	c.cache[key] = ele
-	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
+	item := c.ll.PushFront(&entry{key, 1})
+	c.items[key] = item
+	if c.maxItems != 0 && c.ll.Len() > c.maxItems {
 		// evict olded element
 		c.removeOldest()
 	}
 
-	c.Unlock()
+	c.lock.Unlock()
 	return 1
 }
 
-func (c *LruCache) Del(key Key) {
-	c.Lock()
-	if ele, hit := c.cache[key]; hit {
-		c.removeElement(ele)
+// Len returns the number of items in the cache.
+func (c *LruCache) Len() int {
+	c.lock.RLock()
+
+	if c.items == nil {
+		c.lock.RUnlock()
+		return 0
 	}
-	c.Unlock()
+
+	c.lock.RUnlock()
+	return c.ll.Len()
 }
 
 // RemoveOldest removes the oldest item from the cache.
 func (c *LruCache) removeOldest() {
-	if c.cache == nil {
+	if c.items == nil {
 		return
 	}
-	ele := c.ll.Back()
-	if ele != nil {
-		c.removeElement(ele)
+	if item := c.ll.Back(); item != nil {
+		c.removeElement(item)
+	}
+}
+
+func (c *LruCache) setElement(key Key, value interface{}) {
+	item := c.ll.PushFront(&entry{key, value})
+	c.items[key] = item
+	if c.maxItems != 0 && c.ll.Len() > c.maxItems {
+		// evict olded element
+		c.removeOldest()
 	}
 }
 
 func (c *LruCache) removeElement(e *list.Element) {
 	c.ll.Remove(e)
 	kv := e.Value.(*entry)
-	delete(c.cache, kv.key)
+	delete(c.items, kv.key)
 	if c.OnEvicted != nil {
 		c.OnEvicted(kv.key, kv.value)
 	}
-}
-
-// Len returns the number of items in the cache.
-func (c *LruCache) Len() int {
-	c.Lock()
-	defer c.Unlock()
-
-	if c.cache == nil {
-		return 0
-	}
-	return c.ll.Len()
 }

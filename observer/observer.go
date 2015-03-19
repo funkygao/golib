@@ -7,18 +7,16 @@ import (
 	"time"
 )
 
-const E_NOT_FOUND = "Event Not Found"
-
 var (
-	events  = make(map[string][]chan interface{})
-	rwMutex sync.RWMutex
+	errEventNotFound = errors.New("event not found")
+	events           = make(map[string][]chan interface{})
+	rwMutex          sync.RWMutex
 )
 
 func Subscribe(event string, outputChan chan interface{}) {
 	rwMutex.Lock()
-	defer rwMutex.Unlock()
-
 	events[event] = append(events[event], outputChan)
+	rwMutex.Unlock()
 }
 
 // Stop observing the specified event on the provided output channel
@@ -29,7 +27,7 @@ func UnSubscribe(event string, outputChan chan interface{}) error {
 	newArray := make([]chan interface{}, 0)
 	outChans, ok := events[event]
 	if !ok {
-		return errors.New(E_NOT_FOUND)
+		return errEventNotFound
 	}
 	for _, ch := range outChans {
 		if ch != outputChan {
@@ -40,7 +38,6 @@ func UnSubscribe(event string, outputChan chan interface{}) error {
 	}
 
 	events[event] = newArray
-
 	return nil
 }
 
@@ -51,7 +48,7 @@ func UnSubscribeAll(event string) error {
 
 	outChans, ok := events[event]
 	if !ok {
-		return errors.New(E_NOT_FOUND)
+		return errEventNotFound
 	}
 
 	for _, ch := range outChans {
@@ -68,7 +65,7 @@ func Publish(event string, data interface{}) error {
 
 	outChans, ok := events[event]
 	if !ok {
-		return errors.New(E_NOT_FOUND)
+		return errEventNotFound
 	}
 
 	// notify all through chan
@@ -85,7 +82,7 @@ func PublishTimeout(event string, data interface{}, timeout time.Duration) error
 
 	outChans, ok := events[event]
 	if !ok {
-		return errors.New(E_NOT_FOUND)
+		return errEventNotFound
 	}
 
 	for _, outputChan := range outChans {

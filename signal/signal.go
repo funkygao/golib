@@ -3,8 +3,10 @@ package signal
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 )
@@ -53,7 +55,7 @@ func IgnoreSignal(sig ...os.Signal) {
 	}
 }
 
-// Send a signal to current running process
+// Send a signal to current running process.
 func Kill(sigs ...os.Signal) error {
 	for _, sig := range sigs {
 		select {
@@ -66,9 +68,32 @@ func Kill(sigs ...os.Signal) error {
 	return nil
 }
 
+func findProcess(pidFile string) (p *os.Process, err error) {
+	pidBody, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return nil, err
+	}
+
+	pid, err := strconv.Atoi(string(pidBody))
+	if err != nil {
+		return nil, err
+	}
+
+	return os.FindProcess(pid)
+}
+
 // Send a signal to a process by pid.
 func SignalProcess(pid int, sig os.Signal) error {
 	p, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+
+	return p.Signal(sig)
+}
+
+func SignalProcessByPidFile(pidFile string, sig os.Signal) error {
+	p, err := findProcess(pidFile)
 	if err != nil {
 		return err
 	}

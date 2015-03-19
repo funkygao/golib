@@ -16,6 +16,6 @@ func TestTsToString(t *testing.T) {
 
 func BenchmarkNowBj(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		NowBj()
+		_ = NowBj()
 	}
 }
