@@ -2,6 +2,7 @@ package sampling
 
 import (
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -10,7 +11,7 @@ const (
 )
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano() + int64(os.Getpid()))
 }
 
 func SampleRateSatisfied(rate int) bool {
