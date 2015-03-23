@@ -23,4 +23,14 @@ func TestParseInt(t *testing.T) {
 	n, e = ParseInt([]byte("12.5"))
 	assert.Equal(t, ErrInvalidFormat, e)
 	assert.Equal(t, -1, n)
+
+	// edge case
+	n, _ = ParseInt([]byte("012"))
+	assert.Equal(t, 12, n)
+	n, _ = ParseInt([]byte("000012"))
+	assert.Equal(t, 12, n)
+	n, _ = ParseInt([]byte("0129"))
+	assert.Equal(t, 129, n)
+	n, _ = ParseInt([]byte("99999"))
+	assert.Equal(t, 99999, n)
 }
