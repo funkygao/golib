@@ -13,14 +13,17 @@ const (
 
 <script type="text/javascript">	
 	var mem = [
-			{ label: "NumGC2", data: {{ .NumGC }}, yaxis: 2 },
 			{ label: "HeapSys", data: {{ .HeapSys }} },
 			{ label: "HeapAlloc", data: {{ .HeapAlloc }} },
+			{ label: "HeapIdle", data: {{ .HeapIdle }} },
 			{ label: "HeapReleased2", data: {{ .HeapReleased }}, yaxis: 2 },	
 			{ label: "StackInUse2", data: {{ .StackInUse }}, yaxis: 2 },
 	];
 	var heapObjects = [
 			{ label: "HeapObjects", data: {{ .HeapObjects }} },
+	];
+	var numGc = [
+			{ label: "NumGC", data: {{ .NumGC }}},
 	];
 	var gcPause = [
 			{ label: "GcPause100%", data: {{ .GcPause100 }} },
@@ -97,6 +100,7 @@ const (
 	$(document).ready(function() {
 		var plotmem = $.plot("#placeholder_mem", mem, options_mem);
 		var heapobj = $.plot("#placeholder_heapobj", heapObjects, options_mem);
+		var numgc = $.plot("#placeholder_numgc", numGc, options_mem);
 		var gcpause = $.plot("#placeholder_gcpause", gcPause, options_mem);
 	});	
 </script>
@@ -140,6 +144,10 @@ const (
 	<p>Memory Presure(2 means use 2nd yaxis)</p>
 	<div class="demo-container" style="height:200px;">		
 		<div id="placeholder_mem" class="demo-placeholder"></div>
+	</div>
+	<p>GC Num</p>
+	<div class="demo-container" style="height:200px;">		
+		<div id="placeholder_numgc" class="demo-placeholder"></div>
 	</div>
 	<p>GC Pause Percentiles(ms)</p>
 	<div class="demo-container" style="height:200px;">		
