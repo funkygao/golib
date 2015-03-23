@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	g *Graph
+	g *graph
 )
 
 func Launch(addr string, title string) {

@@ -26,8 +26,8 @@ func (s uint64Slice) Less(i, j int) bool {
 	return s[i] < s[j]
 }
 
-// Graph data of GC related.
-type Graph struct {
+// graph data of GC related.
+type graph struct {
 	Title                                               string
 	NumGC, HeapSys, HeapAlloc, HeapReleased, StackInUse []graphPoints
 	HeapObjects                                         []graphPoints
@@ -36,8 +36,8 @@ type Graph struct {
 	mu                                                  sync.Mutex
 }
 
-func newGraph(title, tpl string) *Graph {
-	return &Graph{
+func newGraph(title, tpl string) *graph {
+	return &graph{
 		Title:        title,
 		tpl:          template.Must(template.New("vis").Parse(tpl)),
 		NumGC:        []graphPoints{},
@@ -53,7 +53,7 @@ func newGraph(title, tpl string) *Graph {
 	}
 }
 
-func (g *Graph) write(w io.Writer) {
+func (g *graph) write(w io.Writer) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
