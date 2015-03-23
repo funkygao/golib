@@ -5,7 +5,7 @@ const (
 <html>
 <head>
 <title>{{ .Title }}</title>
-<meta http-equiv="refresh" content="10">
+<meta http-equiv="refresh" content="{{ .Refresh}}">
 <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.time.min.js"></script>

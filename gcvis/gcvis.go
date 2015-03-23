@@ -8,15 +8,18 @@ var (
 	g *graph
 )
 
-func Launch(addr string, title string) {
-	if addr == "" {
-		panic("addr can not be empty")
+// Launch will start GC visualization on specifed http addr.
+// title is the HTML title while refresh is the second interval
+// between auto refresh.
+func Launch(httpAddr, title string, refresh int) {
+	if httpAddr == "" {
+		panic("httpAddr can not be empty")
 	}
 
-	g = newGraph(title, gcvis_tpl)
+	g = newGraph(title, gcvis_tpl, refresh)
 
 	http.HandleFunc("/", gcVisualize)
-	go http.ListenAndServe(addr, nil)
+	go http.ListenAndServe(httpAddr, nil)
 }
 
 func gcVisualize(w http.ResponseWriter, r *http.Request) {

@@ -29,6 +29,7 @@ func (s uint64Slice) Less(i, j int) bool {
 // graph data of GC related.
 type graph struct {
 	Title                                                         string
+	Refresh                                                       int
 	NumGC, HeapSys, HeapAlloc, HeapReleased, StackInUse, HeapIdle []graphPoints
 	HeapObjects                                                   []graphPoints
 	GcPause100, GcPause99, GcPause95, GcPause75                   []graphPoints
@@ -36,9 +37,10 @@ type graph struct {
 	mu                                                            sync.Mutex
 }
 
-func newGraph(title, tpl string) *graph {
+func newGraph(title, tpl string, refresh int) *graph {
 	return &graph{
 		Title:        title,
+		Refresh:      refresh,
 		tpl:          template.Must(template.New("vis").Parse(tpl)),
 		NumGC:        []graphPoints{},
 		HeapSys:      []graphPoints{},
