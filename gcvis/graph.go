@@ -12,35 +12,34 @@ import (
 
 type graphPoints [2]int
 
-type Uint64Slice []uint64
+type uint64Slice []uint64
 
-func (s Uint64Slice) Len() int {
+func (s uint64Slice) Len() int {
 	return len(s)
 }
 
-func (s Uint64Slice) Swap(i, j int) {
+func (s uint64Slice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (s Uint64Slice) Less(i, j int) bool {
+func (s uint64Slice) Less(i, j int) bool {
 	return s[i] < s[j]
 }
 
-// Dashboard data of engine.
+// Graph data of GC related.
 type Graph struct {
-	Title                                       string
-	NumGC, HeapSys, HeapAlloc, HeapReleased     []graphPoints
-	StackInUse                                  []graphPoints
-	HeapObjects                                 []graphPoints
-	GcPause100, GcPause99, GcPause95, GcPause75 []graphPoints
-	Tpl                                         *template.Template
-	mu                                          sync.Mutex
+	Title                                               string
+	NumGC, HeapSys, HeapAlloc, HeapReleased, StackInUse []graphPoints
+	HeapObjects                                         []graphPoints
+	GcPause100, GcPause99, GcPause95, GcPause75         []graphPoints
+	tpl                                                 *template.Template
+	mu                                                  sync.Mutex
 }
 
-func NewGraph(title, tpl string) Graph {
-	return Graph{
+func newGraph(title, tpl string) *Graph {
+	return &Graph{
 		Title:        title,
-		Tpl:          template.Must(template.New("vis").Parse(tpl)),
+		tpl:          template.Must(template.New("vis").Parse(tpl)),
 		NumGC:        []graphPoints{},
 		HeapSys:      []graphPoints{},
 		HeapAlloc:    []graphPoints{},
@@ -89,7 +88,7 @@ func (g *Graph) write(w io.Writer) {
 		int(memStats.HeapObjects)})
 
 	// sort the GC pause array
-	gcPausesMs := make(Uint64Slice, 0, len(memStats.PauseNs))
+	gcPausesMs := make(uint64Slice, 0, len(memStats.PauseNs))
 	for _, pauseNs := range memStats.PauseNs {
 		if pauseNs == 0 {
 			continue
@@ -113,7 +112,7 @@ func (g *Graph) write(w io.Writer) {
 	g.GcPause75 = append(g.GcPause75, graphPoints{ts,
 		int(percentile(75.0, gcPausesMs))})
 
-	g.Tpl.Execute(w, g)
+	g.tpl.Execute(w, g)
 }
 
 func percentile(perc float64, sortedArr []uint64) uint64 {

@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	g Graph
+	g *Graph
 )
 
 func Launch(addr string, title string) {
@@ -13,7 +13,7 @@ func Launch(addr string, title string) {
 		panic("addr can not be empty")
 	}
 
-	g = NewGraph(title, gcvis_tpl)
+	g = newGraph(title, gcvis_tpl)
 
 	http.HandleFunc("/", gcVisualize)
 	go http.ListenAndServe(addr, nil)
