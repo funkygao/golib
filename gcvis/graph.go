@@ -28,12 +28,12 @@ func (s uint64Slice) Less(i, j int) bool {
 
 // graph data of GC related.
 type graph struct {
-	Title                                               string
-	NumGC, HeapSys, HeapAlloc, HeapReleased, StackInUse []graphPoints
-	HeapObjects                                         []graphPoints
-	GcPause100, GcPause99, GcPause95, GcPause75         []graphPoints
-	tpl                                                 *template.Template
-	mu                                                  sync.Mutex
+	Title                                                         string
+	NumGC, HeapSys, HeapAlloc, HeapReleased, StackInUse, HeapIdle []graphPoints
+	HeapObjects                                                   []graphPoints
+	GcPause100, GcPause99, GcPause95, GcPause75                   []graphPoints
+	tpl                                                           *template.Template
+	mu                                                            sync.Mutex
 }
 
 func newGraph(title, tpl string) *graph {
@@ -43,6 +43,7 @@ func newGraph(title, tpl string) *graph {
 		NumGC:        []graphPoints{},
 		HeapSys:      []graphPoints{},
 		HeapAlloc:    []graphPoints{},
+		HeapIdle:     []graphPoints{},
 		HeapReleased: []graphPoints{},
 		StackInUse:   []graphPoints{},
 		HeapObjects:  []graphPoints{},
@@ -61,6 +62,7 @@ func (g *graph) write(w io.Writer) {
 		g.HeapAlloc = []graphPoints{}
 		g.HeapReleased = []graphPoints{}
 		g.HeapSys = []graphPoints{}
+		g.HeapIdle = []graphPoints{}
 		g.NumGC = []graphPoints{}
 		g.StackInUse = []graphPoints{}
 		g.HeapObjects = []graphPoints{}
@@ -80,6 +82,8 @@ func (g *graph) write(w io.Writer) {
 		int(memStats.HeapSys) / (1 << 20)})
 	g.HeapReleased = append(g.HeapReleased, graphPoints{ts,
 		int(memStats.HeapReleased) / (1 << 20)})
+	g.HeapIdle = append(g.HeapIdle, graphPoints{ts,
+		int(memStats.HeapIdle) / (1 << 20)})
 	g.HeapAlloc = append(g.HeapAlloc, graphPoints{ts,
 		int(memStats.HeapAlloc) / (1 << 20)})
 	g.StackInUse = append(g.StackInUse, graphPoints{ts,
