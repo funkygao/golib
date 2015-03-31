@@ -3,7 +3,14 @@ package cache
 import (
 	"container/list"
 	"sync"
+	"sync/atomic"
 )
+
+type lruCacheStat struct {
+	hits   uint64
+	misses uint64
+	evicts uint64
+}
 
 // goroutine safe LRU cache implementation.
 type LruCache struct {
@@ -17,6 +24,8 @@ type LruCache struct {
 	// an item is evicted. Zero means no limit.
 	maxItems    int
 	initialSize int
+
+	stats *lruCacheStat
 
 	// OnEvicted optionally specificies a callback function to be
 	// executed when an entry is purged from the cache.
@@ -44,6 +53,7 @@ func NewLruCache(maxItems int) *LruCache {
 		ll:          list.New(),
 		items:       make(map[interface{}]*list.Element, sz),
 		initialSize: sz,
+		stats:       &lruCacheStat{},
 	}
 }
 
@@ -93,6 +103,7 @@ func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 	c.lock.RUnlock()
 
 	if hit {
+		atomic.AddUint64(&c.stats.hits, 1)
 		c.lock.Lock()
 		c.ll.MoveToFront(item)
 		c.lock.Unlock()
@@ -101,6 +112,8 @@ func (c *LruCache) Get(key Key) (value interface{}, ok bool) {
 		c.OnGetMiss(key)
 	}
 
+	// miss
+	atomic.AddUint64(&c.stats.misses, 1)
 	return
 }
 
@@ -187,6 +200,7 @@ func (c *LruCache) removeElement(e *list.Element) {
 	c.ll.Remove(e)
 	kv := e.Value.(*entry)
 	delete(c.items, kv.key)
+	atomic.AddUint64(&c.stats.evicts, 1)
 	if c.OnEvicted != nil {
 		c.OnEvicted(kv.key, kv.value)
 	}
