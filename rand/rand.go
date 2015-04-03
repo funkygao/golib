@@ -7,12 +7,17 @@ import (
 	"encoding/hex"
 	"io"
 	"math/rand"
+	"time"
 )
 
 const (
 	minChar = '!'
 	maxChar = '~'
 )
+
+func RandSeedWithTime() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 func RandomString(size int) string {
 	return string(RandomByteSlice(size))
