@@ -20,3 +20,9 @@ func BenchmarkStrconvParseInt(b *testing.B) {
 		strconv.ParseInt(v, 10, 64)
 	}
 }
+
+func BenchmarkClosestPow2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ClosestPow2(1234)
+	}
+}
