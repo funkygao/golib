@@ -1,4 +1,4 @@
-package syslogng
+package io
 
 import (
 	"bufio"
