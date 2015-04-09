@@ -59,7 +59,7 @@ const (
 	};
 
   {{range $idx, $graph := .Graphs}}
-	var data_{{$idx}} = [
+	var data_0 = [
 	{{range $lidx, $line := $graph.Lines}}
 		{label: "{{$line.Legend}}", data: {{$line.Points}}},
 	{{end}}
@@ -68,7 +68,7 @@ const (
 
 	$(document).ready(function() {
 	{{range $idx, $graph := .Graphs}}
-	  $.plot("#graph{{$idx}}", data_{{$idx}}, options);	
+	  $.plot("#graph{{$idx}}", data_0, options);	
   	{{end}}		
 	});	
 </script>
