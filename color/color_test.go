@@ -13,3 +13,7 @@ func TestColorize(t *testing.T) {
 func TestRed(t *testing.T) {
 	assert.Equal(t, "\x1b[31mhello\x1b[0m", Red("hello"))
 }
+
+func TestBlueWithFormat(t *testing.T) {
+	assert.Equal(t, "\x1b[34mhello world\x1b[0m", Blue("hello %s", "world"))
+}

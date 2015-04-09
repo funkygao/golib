@@ -2,45 +2,46 @@ package color
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // Convert a string to string with color escape info that can output to console.
-func Colorize(colors []string, str string) (s string) {
+func Colorize(colors []string, format string, a ...interface{}) (s string) {
 	buf := new(bytes.Buffer)
 	for _, color := range colors {
 		buf.WriteString(color_table[color])
 	}
 
-	buf.WriteString(str)
+	buf.WriteString(fmt.Sprintf(format, a...))
 	buf.WriteString(color_table[Reset])
 	s = buf.String()
 	return
 }
 
-func Blue(str string) string {
-	return colorStr(FgBlue, str)
+func Blue(format string, a ...interface{}) string {
+	return colored(FgBlue, format, a...)
 }
 
-func Red(str string) string {
-	return colorStr(FgRed, str)
+func Red(format string, a ...interface{}) string {
+	return colored(FgRed, format, a...)
 }
 
-func Green(str string) string {
-	return colorStr(FgGreen, str)
+func Green(format string, a ...interface{}) string {
+	return colored(FgGreen, format, a...)
 }
 
-func Yellow(str string) string {
-	return colorStr(FgYellow, str)
+func Yellow(format string, a ...interface{}) string {
+	return colored(FgYellow, format, a...)
 }
 
-func Magenta(str string) string {
-	return colorStr(FgMagenta, str)
+func Magenta(format string, a ...interface{}) string {
+	return colored(FgMagenta, format, a...)
 }
 
-func Cyan(str string) string {
-	return colorStr(FgCyan, str)
+func Cyan(format string, a ...interface{}) string {
+	return colored(FgCyan, format, a...)
 }
 
-func colorStr(color string, str string) string {
-	return Colorize([]string{color}, str)
+func colored(color string, format string, a ...interface{}) string {
+	return Colorize([]string{color}, fmt.Sprintf(format, a...))
 }
