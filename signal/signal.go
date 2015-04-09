@@ -1,3 +1,4 @@
+// Package signal provides helpers to handle OS signals.
 package signal
 
 import (

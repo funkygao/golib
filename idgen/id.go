@@ -1,3 +1,4 @@
+// Package idgen is a twitter snowflake implementation in golang.
 package idgen
 
 import (

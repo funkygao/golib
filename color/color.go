@@ -1,3 +1,5 @@
+// Package color provides facility to make normal text into
+// ansi-colored text so as to output on console.
 package color
 
 import (
