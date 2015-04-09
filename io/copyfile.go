@@ -1,4 +1,4 @@
-package goio
+package io
 
 import (
 	"fmt"
