@@ -12,12 +12,12 @@ type line struct {
 	dataSource DataSource
 }
 
-type graph struct {
+type Graph struct {
 	Title string
 	Lines []*line
 }
 
-func (this *graph) AddLine(legend string, ds DataSource) {
+func (this *Graph) AddLine(legend string, ds DataSource) {
 	this.Lines = append(this.Lines,
 		&line{dataSource: ds, Legend: legend, Points: make([]point, 0)})
 }

@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-// Dashboard -> graph's -> line's -> point's.
+// Dashboard -> Graph's -> line's -> point's.
 type Dashboard struct {
 	Title   string
 	Refresh int // interval
-	Graphs  []*graph
+	Graphs  []*Graph
 
 	tpl   *template.Template
 	mutex sync.Mutex
@@ -21,13 +21,13 @@ func New(title string, refreshInSecond int) *Dashboard {
 	return &Dashboard{
 		Title:   title,
 		Refresh: refreshInSecond,
-		Graphs:  make([]*graph, 0),
+		Graphs:  make([]*Graph, 0),
 		tpl:     template.Must(template.New("dashboard").Parse(tpl)),
 	}
 }
 
-func (this *Dashboard) AddGraph(title string) *graph {
-	g := &graph{
+func (this *Dashboard) AddGraph(title string) *Graph {
+	g := &Graph{
 		Title: title,
 		Lines: make([]*line, 0),
 	}
