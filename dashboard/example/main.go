@@ -27,5 +27,11 @@ func main() {
 	g := d.AddGraph("graph1")
 	g.AddLine("data1", &mydata1{i: 1})
 	g.AddLine("data2", &mydata2{i: 0})
-	d.Launch(":8000")
+	if err := d.Validate(); err != nil {
+		panic(err)
+	}
+	if err := d.Launch(":8000"); err != nil {
+		panic(err)
+	}
+	println("here")
 }
