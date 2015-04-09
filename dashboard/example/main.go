@@ -4,18 +4,18 @@ import (
 	"github.com/funkygao/golib/dashboard"
 )
 
-type myline struct {
+type mydata struct {
 	i int
 }
 
-func (this *myline) Data() int {
+func (this *mydata) Data() int {
 	this.i++
 	return this.i
 }
 
 func main() {
-	d := dashboard.New("test", 10)
-	gcGraph := d.AddGraph("gc")
-	gcGraph.AddLine("Heap", &myline{i: 1})
+	d := dashboard.New("test of dashboard", 5)
+	g := d.AddGraph("graph1")
+	g.AddLine("Heap", &mydata{i: 1})
 	d.Launch(":8000")
 }
