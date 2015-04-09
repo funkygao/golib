@@ -53,8 +53,7 @@ func (this *Dashboard) Launch(httpListenAddr string) error {
 	}
 
 	http.HandleFunc("/", this.handleHttpRequest)
-	http.ListenAndServe(httpListenAddr, nil)
-	return nil
+	return http.ListenAndServe(httpListenAddr, nil)
 }
 
 func (this *Dashboard) handleHttpRequest(w http.ResponseWriter, r *http.Request) {
