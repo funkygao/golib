@@ -33,5 +33,4 @@ func main() {
 	if err := d.Launch(":8000"); err != nil {
 		panic(err)
 	}
-	println("here")
 }
