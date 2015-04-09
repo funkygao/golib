@@ -1,19 +1,36 @@
 package color
 
-import (
-	"bytes"
-	"github.com/funkygao/golib/recycler"
-)
-
 const (
-	colorReset = "Reset"
+	Reset = "Reset"
+
+	Bright     = "Bright"
+	Dim        = "Dim"
+	Underscore = "Underscore"
+	Blink      = "Blink"
+	Reverse    = "Reverse"
+	Hidden     = "Hidden"
+
+	FgBlack   = "FgBlack"
+	FgRed     = "FgRed"
+	FgGreen   = "FgGreen"
+	FgYellow  = "FgYellow"
+	FgBlue    = "FgBlue"
+	FgMagenta = "FgMagenta"
+	FgCyan    = "FgCyan"
+	FgWhite   = "FgWhite"
+
+	BgBlack   = "BgBlack"
+	BgRed     = "BgRed"
+	BgGreen   = "BgGreen"
+	BgYellow  = "BgYellow"
+	BgBlue    = "BgBlue"
+	BgMagenta = "BgMagenta"
+	BgCyan    = "BgCyan"
+	BgWhite   = "BgWhite"
 )
 
 var (
-	bufGetter, bufPutter chan interface{}
-
 	color_table = map[string]string{
-		// e,g. FgBlack + Blink + BgGreen + "hello" + Reset
 		"Reset": "\x1b[0m",
 
 		"Bright":     "\x1b[1m",
@@ -42,9 +59,3 @@ var (
 		"BgWhite":   "\x1b[47m",
 	}
 )
-
-func init() {
-	bufGetter, bufPutter = recycler.New(10, func() interface{} {
-		return new(bytes.Buffer)
-	})
-}
