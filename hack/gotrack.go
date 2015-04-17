@@ -1,6 +1,3 @@
-// Defensive debug-only utility to track that functions run on the
-// goroutine that they're supposed to.
-
 package hack
 
 import (
@@ -16,11 +13,13 @@ var DebugGoroutines = false
 
 type goroutineLock uint64
 
-func newGoroutineLock() goroutineLock {
+// Defensive debug-only utility to track that functions run on the
+// goroutine that they're supposed to.
+func NewGoroutineLock() goroutineLock {
 	return goroutineLock(curGoroutineID())
 }
 
-func (g goroutineLock) check() {
+func (g goroutineLock) Check() {
 	if !DebugGoroutines {
 		return
 	}
@@ -29,7 +28,7 @@ func (g goroutineLock) check() {
 	}
 }
 
-func (g goroutineLock) checkNotOn() {
+func (g goroutineLock) CheckNotOn() {
 	if !DebugGoroutines {
 		return
 	}
