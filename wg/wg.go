@@ -5,13 +5,17 @@ import (
 )
 
 type WaitGroupWrapper struct {
-	sync.WaitGroup
+	wg sync.WaitGroup
 }
 
 func (this *WaitGroupWrapper) Wrap(cb func()) {
-	this.Add(1)
+	this.wg.Add(1)
 	go func() {
 		cb()
-		this.Done()
+		this.wg.Done()
 	}()
+}
+
+func (this *WaitGroupWrapper) Wait() {
+	this.wg.Wait()
 }
