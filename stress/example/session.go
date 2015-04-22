@@ -2,16 +2,21 @@ package main
 
 import (
 	"github.com/bom-d-van/xmppclient"
+	"github.com/funkygao/golib/stress"
 	"io/ioutil"
 	"log"
 	"strings"
-	"sync/atomic"
 )
 
-func runSession(seq int) {
-	atomic.AddInt64(&concurrency, 1)
-	defer atomic.AddInt64(&concurrency, -1)
+func sentMsg() {
+	stress.IncCounter("sent", 1)
+}
 
+func recvMsg() {
+	stress.IncCounter("recv", 1)
+}
+
+func runSession(seq int) {
 	conn, err := xmppclient.Dial(
 		options.server,
 		options.jid,

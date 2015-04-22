@@ -3,6 +3,7 @@ package stress
 import (
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -12,17 +13,22 @@ type waitGroupWrapper struct {
 
 func (this *waitGroupWrapper) Wrap(seq int, cb func(seq int)) {
 	this.wg.Add(1)
+	atomic.AddInt32(&concurrency, 1)
 	go func() {
 		cb(seq)
 		this.wg.Done()
+		atomic.AddInt32(&concurrency, -1)
 	}()
 }
 
 func (this *waitGroupWrapper) Wait() {
 	this.wg.Wait()
+	atomic.StoreInt32(&concurrency, 0)
 }
 
 func RunStress(cb func(seq int)) {
+	go runConsoleStats()
+
 	var waitGroup waitGroupWrapper
 	var t0 = time.Now()
 	for c := flags.c1; c <= flags.c2; c += flags.step {
