@@ -3,7 +3,9 @@ package stress
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -36,11 +38,13 @@ func runConsoleStats() {
 	for _ = range ticker.C {
 		counterMutex.RLock()
 		s := ""
+		c := atomic.LoadInt32(&concurrency)
+		gn := runtime.NumGoroutine()
 		for k, v := range defaultCounter {
 			s += fmt.Sprintf("%s:%d/%d ", k, (v-lastCounter[k])/flags.tick, v)
 			lastCounter[k] = v
 		}
-		log.Printf("c:%d qps: {%s}", concurrency, s)
+		log.Printf("c:%d go:%d qps: {%s}", c, gn, s)
 		counterMutex.RUnlock()
 	}
 
