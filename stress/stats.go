@@ -35,13 +35,35 @@ func runConsoleStats() {
 	defer ticker.Stop()
 
 	lastCounter := make(Counter)
+	minCounter := make(Counter)
+	maxCounter := make(Counter)
 	for _ = range ticker.C {
 		counterMutex.RLock()
 		s := ""
 		c := atomic.LoadInt32(&concurrency)
 		gn := runtime.NumGoroutine()
 		for k, v := range defaultCounter {
-			s += fmt.Sprintf("%s:%d/%d ", k, (v-lastCounter[k])/flags.tick, v)
+			min := (v - lastCounter[k]) / flags.tick
+			max := (v - lastCounter[k]) / flags.tick
+			x, present := minCounter[k]
+			if !present {
+				minCounter[k] = min
+			} else if x <= min {
+				min = x
+			} else {
+				minCounter[k] = min
+			}
+			x, present = maxCounter[k]
+			if !present {
+				maxCounter[k] = max
+			} else if x >= max {
+				max = x
+			} else {
+				maxCounter[k] = max
+			}
+
+			s += fmt.Sprintf("%s:%d/%d,%d-%d ", k, (v-lastCounter[k])/flags.tick, v,
+				min, max)
 			lastCounter[k] = v
 		}
 		log.Printf("c:%d go:%d qps: {%s}", c, gn, s)
