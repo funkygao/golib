@@ -6,6 +6,7 @@ import (
 
 // ReadLine is a helper func for bufio's ReadLine that
 // read the complete line no matter how long it is.
+// Note: EOL is stripped.
 func ReadLine(bio *bufio.Reader) ([]byte, error) {
 	line, isPrefix, err := bio.ReadLine()
 	if !isPrefix {
