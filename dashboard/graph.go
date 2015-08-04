@@ -4,6 +4,10 @@ type DataSource interface {
 	Data() int
 }
 
+type WithHisotry interface {
+	History() [][2]int
+}
+
 type point [2]int // [ts, data]
 
 type line struct {

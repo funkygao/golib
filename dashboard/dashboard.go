@@ -52,8 +52,23 @@ func (this *Dashboard) Launch(httpListenAddr string) error {
 		return ErrEmptyHttpAddr
 	}
 
+	this.initHistory()
+
 	http.HandleFunc("/", this.handleHttpRequest)
 	return http.ListenAndServe(httpListenAddr, nil)
+}
+
+func (this *Dashboard) initHistory() {
+	for _, g := range this.Graphs {
+		for _, l := range g.Lines {
+			if v, ok := l.dataSource.(WithHisotry); ok {
+				for _, d := range v.History() {
+					l.Points = append(l.Points, point{d[0], d[1]})
+				}
+			}
+		}
+	}
+
 }
 
 func (this *Dashboard) handleHttpRequest(w http.ResponseWriter, r *http.Request) {
