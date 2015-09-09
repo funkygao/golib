@@ -33,7 +33,7 @@ func Debugf(format string, args ...interface{}) {
 		nanosec := t.Nanosecond() / 1e3
 
 		debugLock.Lock()
-		fmt.Printf("DEBUG: [%d:%d:%d.%04d] %s:%d(%s): %s\n",
+		fmt.Printf("DEBUG: [%02d:%02d:%02d.%04d] %s:%d(%s): %s\n",
 			hour, min, sec, nanosec,
 			file, line, color.Red(fnparts[len(fnparts)-1]),
 			fmt.Sprintf(format, args...))
