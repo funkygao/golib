@@ -17,7 +17,6 @@ type ResourcePool struct {
 
 	// stats
 	waitCount sync2.AtomicInt64
-	waitTime  sync2.AtomicDuration
 
 	diagnosticTracker *DiagnosticTracker
 }
@@ -114,12 +113,10 @@ func (this *ResourcePool) get(wait bool) (resource Resource, err error) {
 		}
 
 		this.waitCount.Add(1)
-		log.Warn("ResourcePool[%s] busy, pending:%d waited:%s",
-			this.name, this.WaitCount(), this.waitTime.Get())
-
 		t1 := time.Now()
 		wrapper = <-this.resourcePool
-		this.waitTime.Add(time.Now().Sub(t1))
+		log.Debug("ResourcePool[%s] busy, pending:%d waited:%s",
+			this.name, this.WaitCount(), time.Since(t1))
 	}
 
 	// Close the aged idle resource
@@ -266,11 +263,4 @@ func (this *ResourcePool) WaitCount() int64 {
 		return 0
 	}
 	return this.waitCount.Get()
-}
-
-func (this *ResourcePool) WaitTime() time.Duration {
-	if this == nil {
-		return 0
-	}
-	return this.waitTime.Get()
 }
