@@ -33,13 +33,17 @@ func RunStress(cb func(seq int)) {
 	var t0 = time.Now()
 	for c := flags.c1; c <= flags.c2; c += flags.step {
 		for r := 0; r < flags.round; r++ {
-			log.Printf("concurrency: %6d started, loops: %d", c, r)
+			if !flags.neat {
+				log.Printf("concurrency: %6d started, loops: %d", c, r)
+			}
 			t1 := time.Now()
 			for i := 0; i < c; i++ {
 				waitGroup.Wrap(i, cb)
 			}
 			waitGroup.Wait()
-			log.Printf("concurrency: %6d elapsed: %s", c, time.Since(t1))
+			if !flags.neat {
+				log.Printf("concurrency: %6d elapsed: %s", c, time.Since(t1))
+			}
 		}
 
 	}
