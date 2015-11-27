@@ -66,7 +66,7 @@ func runConsoleStats() {
 				min, max)
 			lastCounter[k] = v
 		}
-		log.Printf("c:%d go:%d qps: {%s}", c, gn, s)
+		log.Printf("c:%-5d go:%-5d qps: {%s}", c, gn, s)
 		counterMutex.RUnlock()
 	}
 
