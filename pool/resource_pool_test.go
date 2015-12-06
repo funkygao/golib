@@ -511,3 +511,14 @@ func TestNil(t *testing.T) {
 		t.Errorf("want zeroes, got %v %v %v %v %v", c, a, mx, wc, it)
 	}
 }
+
+func BenchmarkResourcePool(b *testing.B) {
+	p := NewResourcePool("bench", PoolFactory, 1000, 1000, 0, 0, 0)
+	for i := 0; i < b.N; i++ {
+		client, e := p.Get()
+		if e != nil {
+			b.Fatal(e)
+		}
+		p.Put(client)
+	}
+}
