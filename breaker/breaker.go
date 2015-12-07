@@ -143,8 +143,7 @@ func (b *Consecutive) Open() bool {
 		return false
 	}
 
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+    b.mutex.Lock()
 
 	if b.instantProvider == nil {
 		b.instantProvider = systemTimer
@@ -152,11 +151,14 @@ func (b *Consecutive) Open() bool {
 
 	switch {
 	case b.state == closed:
+		b.mutex.Unlock()
 		return false
 	case b.nextClose.Before(b.instantProvider.Now()):
 		b.reset()
+		b.mutex.Unlock()
 		return false
 	default:
+		b.mutex.Unlock()
 		return true
 	}
 
