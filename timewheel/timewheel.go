@@ -1,3 +1,7 @@
+// Package timewheel implements a timewheel algorithm that
+// is suitable for large numbers of timers.
+//
+// It is based on golang channel broadcast mechanism.
 package timewheel
 
 import (
@@ -6,83 +10,79 @@ import (
 )
 
 type TimeWheel struct {
-	sync.Mutex
+	mu sync.Mutex
 
-	interval time.Duration
+	interval   time.Duration
+	maxTimeout time.Duration
 
 	ticker *time.Ticker
 	quit   chan struct{}
 
-	maxTimeout time.Duration
-
 	cs []chan struct{}
 
-	pos int
+	pos int // current time tick pointer
 }
 
 func NewTimeWheel(interval time.Duration, buckets int) *TimeWheel {
-	w := new(TimeWheel)
+	this := new(TimeWheel)
 
-	w.interval = interval
+	this.interval = interval
+	this.maxTimeout = time.Duration(interval * (time.Duration(buckets)))
 
-	w.quit = make(chan struct{})
-	w.pos = 0
-
-	w.maxTimeout = time.Duration(interval * (time.Duration(buckets)))
-
-	w.cs = make([]chan struct{}, buckets)
-
-	for i := range w.cs {
-		w.cs[i] = make(chan struct{})
+	this.quit = make(chan struct{})
+	this.pos = 0
+	this.cs = make([]chan struct{}, buckets)
+	for i := range this.cs {
+		this.cs[i] = make(chan struct{})
 	}
 
-	w.ticker = time.NewTicker(interval)
-	go w.run()
+	this.ticker = time.NewTicker(interval)
+	go this.run()
 
-	return w
+	return this
 }
 
-func (w *TimeWheel) Stop() {
-	close(w.quit)
+func (this *TimeWheel) Stop() {
+	close(this.quit)
 }
 
-func (w *TimeWheel) After(timeout time.Duration) <-chan struct{} {
-	if timeout >= w.maxTimeout {
+func (this *TimeWheel) After(timeout time.Duration) <-chan struct{} {
+	if timeout >= this.maxTimeout {
 		panic("timeout too much, over maxtimeout")
 	}
 
-	w.Lock()
+	this.mu.Lock()
 
-	index := (w.pos + int(timeout/w.interval)) % len(w.cs)
+	index := (this.pos + int(timeout/this.interval)) % len(this.cs)
+	broadcastCh := this.cs[index]
 
-	b := w.cs[index]
+	this.mu.Unlock()
 
-	w.Unlock()
-
-	return b
+	return broadcastCh
 }
 
-func (w *TimeWheel) run() {
+func (this *TimeWheel) run() {
 	for {
 		select {
-		case <-w.ticker.C:
-			w.onTicker()
-		case <-w.quit:
-			w.ticker.Stop()
+		case <-this.ticker.C:
+			this.onTicker()
+
+		case <-this.quit:
+			this.ticker.Stop()
 			return
 		}
 	}
 }
 
-func (w *TimeWheel) onTicker() {
-	w.Lock()
+func (this *TimeWheel) onTicker() {
+	this.mu.Lock()
 
-	lastC := w.cs[w.pos]
-	w.cs[w.pos] = make(chan struct{})
+	this.pos = (this.pos + 1) % len(this.cs) // move the time pointer ahead
+	broadcastCh := this.cs[this.pos]
+	this.cs[this.pos] = make(chan struct{})
 
-	w.pos = (w.pos + 1) % len(w.cs)
+	this.mu.Unlock()
 
-	w.Unlock()
-
-	close(lastC)
+	// broadcast the timers: time is up!
+	close(broadcastCh)
 }

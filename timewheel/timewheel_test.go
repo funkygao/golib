@@ -6,11 +6,29 @@ import (
 )
 
 func TestTimeWheel(t *testing.T) {
-	w := NewTimeWheel(100*time.Millisecond, 10)
+	w := NewTimeWheel(time.Second, 10)
+	defer w.Stop()
+
+	t1 := time.Now()
+
+	go func() {
+		select {
+		case <-w.After(time.Second):
+			t.Logf("expected 1s, got %s", time.Since(t1))
+		}
+	}()
+
+	go func() {
+		select {
+		case <-w.After(2 * time.Second):
+			t.Logf("expected 2s, got %s", time.Since(t1))
+		}
+	}()
 
 	for {
 		select {
-		case <-w.After(200 * time.Millisecond):
+		case <-w.After(3 * time.Second):
+			t.Logf("expected 3s, got %s", time.Since(t1))
 			return
 		}
 	}
