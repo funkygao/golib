@@ -48,6 +48,19 @@ func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 	}
 }
 
+func RegisterSignalsHandler(handler SignalHandler, sig ...os.Signal) {
+	signals.Lock()
+	defer signals.Unlock()
+
+	for _, s := range sig {
+		if _, present := signals.handlers[s]; !present {
+			signals.handlers[s] = handler
+			signal.Notify(signals.ch, s)
+		}
+	}
+
+}
+
 // Let current process ignore some os signals.
 func IgnoreSignal(sig ...os.Signal) {
 	ignoreFunc := func(s os.Signal) {}
