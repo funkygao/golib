@@ -17,6 +17,11 @@ const (
 
 func PrettySince(t time.Time) string {
 	sec := int(time.Since(t).Seconds())
+	var negative = false
+	if sec < 0 {
+		negative = true
+		sec = -sec
+	}
 	r := ""
 	y := sec / Year
 	if y > 0 {
@@ -44,6 +49,9 @@ func PrettySince(t time.Time) string {
 		sec = sec % Minute
 	}
 	r += fmt.Sprintf("%ds", sec)
+	if negative {
+		r = "-" + r
+	}
 	return r
 
 }
