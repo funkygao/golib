@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,7 +43,14 @@ func runConsoleStats() {
 		s := ""
 		c := atomic.LoadInt32(&concurrency)
 		gn := runtime.NumGoroutine()
-		for k, v := range defaultCounter {
+		sortedKeys := make([]string, 0, len(defaultCounter))
+		for k, _ := range defaultCounter {
+			sortedKeys = append(sortedKeys, k)
+		}
+		sort.Strings(sortedKeys)
+		for _, k := range sortedKeys {
+			v := defaultCounter[k]
+
 			min := (v - lastCounter[k]) / flags.tick
 			max := (v - lastCounter[k]) / flags.tick
 			x, present := minCounter[k]
