@@ -70,7 +70,7 @@ func runConsoleStats() {
 				maxCounter[k] = max
 			}
 
-			s += fmt.Sprintf("%s:%d/%d,%d-%d ", k, (v-lastCounter[k])/flags.tick, v,
+			s += fmt.Sprintf("%s:%6d/%-9d(%4d-%-6d) ", k, (v-lastCounter[k])/flags.tick, v,
 				min, max)
 			lastCounter[k] = v
 		}
