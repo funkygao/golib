@@ -23,16 +23,6 @@ func PrettySince(t time.Time) string {
 		sec = -sec
 	}
 	r := ""
-	y := sec / Year
-	if y > 0 {
-		r += fmt.Sprintf("%dy", y)
-		sec = sec % Year
-	}
-	m := sec / Month
-	if m > 0 {
-		r += fmt.Sprintf("%dm", m)
-		sec = sec % Month
-	}
 	d := sec / Day
 	if d > 0 {
 		r += fmt.Sprintf("%dd", d)
