@@ -9,11 +9,11 @@ type LeakyBuckets struct {
 	buckets map[string]*LeakyBucket
 	mu      sync.RWMutex
 
-	size     uint16
+	size     int
 	interval time.Duration
 }
 
-func NewLeakyBuckets(size uint16, leakInterval time.Duration) *LeakyBuckets {
+func NewLeakyBuckets(size int, leakInterval time.Duration) *LeakyBuckets {
 	return &LeakyBuckets{
 		buckets:  make(map[string]*LeakyBucket),
 		size:     size,
@@ -21,7 +21,7 @@ func NewLeakyBuckets(size uint16, leakInterval time.Duration) *LeakyBuckets {
 	}
 }
 
-func (this *LeakyBuckets) Pour(key string, amount uint16) bool {
+func (this *LeakyBuckets) Pour(key string, amount int) bool {
 	this.mu.Lock()
 	if b, present := this.buckets[key]; present {
 		this.mu.Unlock()

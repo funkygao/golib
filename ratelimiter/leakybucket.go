@@ -6,14 +6,14 @@ import (
 )
 
 type LeakyBucket struct {
-	Size         uint16
+	Size         int
 	Fill         float64
 	LeakInterval time.Duration // time.Duration for 1 unit of size to leak
 	Lastupdate   time.Time
 	Now          func() time.Time
 }
 
-func NewLeakyBucket(size uint16, leakInterval time.Duration) *LeakyBucket {
+func NewLeakyBucket(size int, leakInterval time.Duration) *LeakyBucket {
 	bucket := LeakyBucket{
 		Size:         size,
 		Fill:         0,
@@ -38,7 +38,7 @@ func (b *LeakyBucket) updateFill() {
 	b.Lastupdate = now
 }
 
-func (b *LeakyBucket) Pour(amount uint16) bool {
+func (b *LeakyBucket) Pour(amount int) bool {
 	b.updateFill()
 
 	var newfill float64 = b.Fill + float64(amount)
@@ -67,7 +67,7 @@ func (b *LeakyBucket) TimeSinceLastUpdate() time.Duration {
 }
 
 type LeakyBucketSer struct {
-	Size         uint16
+	Size         int
 	Fill         float64
 	LeakInterval time.Duration // time.Duration for 1 unit of size to leak
 	Lastupdate   time.Time
