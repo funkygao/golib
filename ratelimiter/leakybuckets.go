@@ -9,11 +9,11 @@ type LeakyBuckets struct {
 	buckets map[string]*LeakyBucket
 	mu      sync.RWMutex
 
-	size     int
+	size     int64
 	interval time.Duration
 }
 
-func NewLeakyBuckets(size int, leakInterval time.Duration) *LeakyBuckets {
+func NewLeakyBuckets(size int64, leakInterval time.Duration) *LeakyBuckets {
 	return &LeakyBuckets{
 		buckets:  make(map[string]*LeakyBucket),
 		size:     size,

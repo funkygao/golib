@@ -19,3 +19,10 @@ func BenchmarkLeakyBucketsDelete(b *testing.B) {
 		lb.Delete("foo")
 	}
 }
+
+func BenchmarkLeakyBucketPour(b *testing.B) {
+	lk := NewLeakyBucket(100, time.Second)
+	for i := 0; i < b.N; i++ {
+		lk.Pour(1)
+	}
+}
