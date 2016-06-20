@@ -16,3 +16,8 @@ func TestNewPseudoSeed(t *testing.T) {
 		t.Logf("%d\n", NewPseudoSeed())
 	}
 }
+
+func TestShuffleInts(t *testing.T) {
+	a := []int{1, 2, 3, 4, 5, 9, 7}
+	t.Logf("%+v", ShuffleInts(a))
+}
