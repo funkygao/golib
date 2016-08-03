@@ -42,9 +42,8 @@ func SetupLogging(logFile, logLevel, crashLogFile, alarmSockPath, alarmTag strin
 	} else {
 		log.DeleteFilter("stdout")
 
-		filer := log.NewFileLogWriter(logFile, false)
+		filer := log.NewFileLogWriter(logFile, true, false, 0644)
 		filer.SetFormat("[%d %T] [%L] (%S) %M")
-		filer.SetRotate(true)
 		filer.SetRotateSize(0)
 		filer.SetRotateLines(0)
 		filer.SetRotateDaily(true)
