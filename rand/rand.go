@@ -42,3 +42,21 @@ func SizedString(size int) string {
 	io.ReadFull(crand.Reader, u)
 	return hex.EncodeToString(u)
 }
+
+func WeightedRand(weights map[string]int) string {
+	sum := 0
+	for _, v := range weights {
+		sum += v
+	}
+
+	r := rand.Intn(sum)
+	for k, v := range weights {
+		r -= v
+		if r <= 0 {
+			return k
+		}
+	}
+
+	// should never reach here
+	return ""
+}
