@@ -3,6 +3,7 @@ package idgen
 
 import (
 	"errors"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -37,6 +38,7 @@ type IdGenerator struct {
 	wid           int64  // worker id
 	seq           int64
 	lastTimestamp int64
+	randStartSeq  bool
 }
 
 func NewIdGenerator(wid int) (this *IdGenerator, err error) {
@@ -46,6 +48,16 @@ func NewIdGenerator(wid int) (this *IdGenerator, err error) {
 		return nil, ErrorInvalidWorkerId
 	}
 	return
+}
+
+// WithRandStartSeq returns an IdGenerator whose starting sequence at
+// the millionsecond switching point be randomized, instead of always
+// being zero.
+// In this way, the generated id's ending digit will be more evenly
+// distributed. Otherwise, most id's ending digit will be 0.
+func (this *IdGenerator) WithRandStartSeq(r bool) *IdGenerator {
+	this.randStartSeq = r
+	return this
 }
 
 func (this *IdGenerator) milliseconds() int64 {
@@ -81,7 +93,11 @@ func (this *IdGenerator) nextId(tag int16) (int64, error) {
 			}
 		}
 	} else {
-		this.seq = 0
+		if this.randStartSeq {
+			this.seq = rand.Int63n(10)
+		} else {
+			this.seq = 0
+		}
 	}
 
 	this.lastTimestamp = ts
