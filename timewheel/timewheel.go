@@ -49,6 +49,8 @@ func (this *TimeWheel) Stop() {
 func (this *TimeWheel) After(timeout time.Duration) <-chan struct{} {
 	if timeout >= this.maxTimeout {
 		panic("timeout too much, over maxtimeout")
+	} else if timeout < time.Second {
+		timeout = time.Second
 	}
 
 	this.mu.Lock()
