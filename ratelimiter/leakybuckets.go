@@ -9,30 +9,32 @@ type LeakyBuckets struct {
 	buckets map[string]*LeakyBucket
 	mu      sync.RWMutex
 
-	size     int64
-	interval time.Duration
+	capacity int64
+	rate     time.Duration
 }
 
-func NewLeakyBuckets(size int64, leakInterval time.Duration) *LeakyBuckets {
+func NewLeakyBuckets(capacity int64, rate time.Duration) *LeakyBuckets {
 	return &LeakyBuckets{
-		buckets:  make(map[string]*LeakyBucket),
-		size:     size,
-		interval: leakInterval,
+		buckets:  make(map[string]*LeakyBucket, 20),
+		capacity: capacity,
+		rate:     rate,
 	}
 }
 
+// When amount is 0, just check if the bucket is full.
 func (this *LeakyBuckets) Pour(key string, amount int) bool {
 	this.mu.Lock()
 	if b, present := this.buckets[key]; present {
+		r := b.Pour(amount)
 		this.mu.Unlock()
-		return b.Pour(amount)
+		return r
 	}
 
 	// key not present
-	this.buckets[key] = NewLeakyBucket(this.size, this.interval)
+	this.buckets[key] = NewLeakyBucket(this.capacity, this.rate)
+	r := this.buckets[key].Pour(amount)
 	this.mu.Unlock()
-
-	return this.buckets[key].Pour(amount)
+	return r
 }
 
 func (this *LeakyBuckets) Delete(key string) {
