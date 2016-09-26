@@ -78,7 +78,7 @@ func SetLock(l *sync.Mutex) {
 
 // Caller func name with skip as the call stack level.
 func CallerFuncName(skipFrames int) string {
-	pc, _, _, _ := runtime.Caller(skipFrames)
+	pc, fn, line, _ := runtime.Caller(skipFrames)
 	f := runtime.FuncForPC(pc)
-	return f.Name() // the caller func name
+	return fmt.Sprintf("%s:%s:%d", f.Name(), fn, line) // the caller func name
 }
