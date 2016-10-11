@@ -48,6 +48,19 @@ func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 	}
 }
 
+func RegisterHandler(handler SignalHandler, sig ...os.Signal) {
+	signals.Lock()
+	defer signals.Unlock()
+
+	for _, s := range sig {
+		if _, present := signals.handlers[s]; !present {
+			signals.handlers[s] = handler
+			signal.Notify(signals.ch, s)
+		}
+	}
+
+}
+
 func RegisterSignalsHandler(handler SignalHandler, sig ...os.Signal) {
 	signals.Lock()
 	defer signals.Unlock()
