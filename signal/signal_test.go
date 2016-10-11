@@ -20,7 +20,7 @@ func TestAll(t *testing.T) {
 		assert.Equal(t, []os.Signal{syscall.SIGINT, syscall.SIGHUP}, gotSignals)
 	})
 
-	IgnoreSignal(syscall.SIGALRM, syscall.SIGABRT)
+	Ignore(syscall.SIGALRM, syscall.SIGABRT)
 
 	assert.Equal(t, nil, Kill(syscall.SIGALRM,
 		syscall.SIGINT, syscall.SIGHUP, syscall.SIGABRT))

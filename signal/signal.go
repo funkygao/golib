@@ -38,6 +38,7 @@ func init() {
 	}()
 }
 
+// Deprecated
 func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 	signals.Lock()
 	defer signals.Unlock()
@@ -49,18 +50,10 @@ func RegisterSignalHandler(sig os.Signal, handler SignalHandler) {
 }
 
 func RegisterHandler(handler SignalHandler, sig ...os.Signal) {
-	signals.Lock()
-	defer signals.Unlock()
-
-	for _, s := range sig {
-		if _, present := signals.handlers[s]; !present {
-			signals.handlers[s] = handler
-			signal.Notify(signals.ch, s)
-		}
-	}
-
+    RegisterSignalsHandler(handler, sig...)
 }
 
+// Deprecated
 func RegisterSignalsHandler(handler SignalHandler, sig ...os.Signal) {
 	signals.Lock()
 	defer signals.Unlock()
@@ -75,11 +68,9 @@ func RegisterSignalsHandler(handler SignalHandler, sig ...os.Signal) {
 }
 
 // Let current process ignore some os signals.
-func IgnoreSignal(sig ...os.Signal) {
+func Ignore(sig ...os.Signal) {
 	ignoreFunc := func(s os.Signal) {}
-	for _, s := range sig {
-		RegisterSignalHandler(s, ignoreFunc)
-	}
+    RegisterHandler(ignoreFunc, sig...)
 }
 
 // Send a signal to current running process.
