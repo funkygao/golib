@@ -11,6 +11,8 @@ func TestGoroutineLock(t *testing.T) {
 	g := NewGoroutineLock()
 	g.Check()
 
+	t.Logf("goroutine id: %d", curGoroutineID())
+
 	sawPanic := make(chan interface{})
 	go func() {
 		defer func() { sawPanic <- recover() }()
