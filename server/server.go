@@ -42,7 +42,7 @@ func (this *Server) Launch() *Server {
 	this.StartedAt = time.Now()
 	this.hostname, _ = os.Hostname()
 	this.pid = os.Getpid()
-	signal.IgnoreSignal(syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
+	signal.Ignore(syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
 	runtime.GOMAXPROCS(this.Int("max_cpu", runtime.NumCPU()))
 	return this
 }
