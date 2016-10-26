@@ -31,9 +31,9 @@ func RunStress(cb func(seq int)) {
 
 	var waitGroup waitGroupWrapper
 	var t0 = time.Now()
-	for c := flags.c1; c <= flags.c2; c += flags.step {
-		for r := 0; r < flags.round; r++ {
-			if !flags.neat {
+	for c := Flags.C1; c <= Flags.C2; c += Flags.Step {
+		for r := 0; r < Flags.Round; r++ {
+			if !Flags.Neat {
 				log.Printf("concurrency: %6d started, loops: %d", c, r)
 			}
 			t1 := time.Now()
@@ -41,7 +41,7 @@ func RunStress(cb func(seq int)) {
 				waitGroup.Wrap(i, cb)
 			}
 			waitGroup.Wait()
-			if !flags.neat {
+			if !Flags.Neat {
 				log.Printf("concurrency: %6d elapsed: %s", c, time.Since(t1))
 			}
 		}

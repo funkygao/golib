@@ -32,7 +32,7 @@ func (this Counter) add(key string, delta int64) {
 }
 
 func runConsoleStats() {
-	ticker := time.NewTicker(time.Second * time.Duration(flags.tick))
+	ticker := time.NewTicker(time.Second * time.Duration(Flags.Tick))
 	defer ticker.Stop()
 
 	lastCounter := make(Counter)
@@ -51,8 +51,8 @@ func runConsoleStats() {
 		for _, k := range sortedKeys {
 			v := defaultCounter[k]
 
-			min := (v - lastCounter[k]) / flags.tick
-			max := (v - lastCounter[k]) / flags.tick
+			min := (v - lastCounter[k]) / Flags.Tick
+			max := (v - lastCounter[k]) / Flags.Tick
 			x, present := minCounter[k]
 			if !present {
 				minCounter[k] = min
@@ -70,7 +70,7 @@ func runConsoleStats() {
 				maxCounter[k] = max
 			}
 
-			s += fmt.Sprintf("%s:%6d/%-9d(%4d-%-6d) ", k, (v-lastCounter[k])/flags.tick, v,
+			s += fmt.Sprintf("%s:%6d/%-9d(%4d-%-6d) ", k, (v-lastCounter[k])/Flags.Tick, v,
 				min, max)
 			lastCounter[k] = v
 		}
