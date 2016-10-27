@@ -27,7 +27,7 @@ func (this *waitGroupWrapper) Wait() {
 }
 
 func RunStress(cb func(seq int)) {
-	go runConsoleStats()
+	go runReporter()
 
 	var waitGroup waitGroupWrapper
 	var t0 = time.Now()

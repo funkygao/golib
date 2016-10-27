@@ -31,7 +31,7 @@ func (this Counter) add(key string, delta int64) {
 	counterMutex.Unlock()
 }
 
-func runConsoleStats() {
+func runReporter() {
 	ticker := time.NewTicker(time.Second * time.Duration(Flags.Tick))
 	defer ticker.Stop()
 
