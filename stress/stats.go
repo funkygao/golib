@@ -25,14 +25,23 @@ func (this Counter) add(key string, delta int64) {
 	counterMutex.Unlock()
 }
 
-func runReporter() {
+func runSlaveReporter() {
+	ticker := time.NewTicker(time.Second * time.Duration(Flags.Tick))
+	defer ticker.Stop()
+
+	for range ticker.C {
+		reportToMaster()
+	}
+}
+
+func runMasterReporter() {
 	ticker := time.NewTicker(time.Second * time.Duration(Flags.Tick))
 	defer ticker.Stop()
 
 	lastCounter := make(Counter)
 	minCounter := make(Counter)
 	maxCounter := make(Counter)
-	for _ = range ticker.C {
+	for range ticker.C {
 		counterMutex.RLock()
 		s := ""
 		c := atomic.LoadInt32(&concurrency)

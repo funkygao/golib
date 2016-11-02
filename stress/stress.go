@@ -27,7 +27,13 @@ func (this *waitGroupWrapper) Wait() {
 }
 
 func RunStress(cb func(seq int)) {
-	go runReporter()
+	switch Flags.MasterAddr {
+	case "":
+		go runMasterReporter()
+
+	default:
+		go runSlaveReporter()
+	}
 
 	var waitGroup waitGroupWrapper
 	var t0 = time.Now()
