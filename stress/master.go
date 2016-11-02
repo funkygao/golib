@@ -49,11 +49,15 @@ func init() {
 
 func reportToMaster() {
 	counterMutex.RLock()
-	defer counterMutex.RUnlock()
+	counterClone := make(Counter, len(defaultCounter))
+	for k, v := range defaultCounter {
+		counterClone[k] = v
+	}
+	counterMutex.RUnlock()
 
 	arg := &ReportArg{
 		Id:      instanceId,
-		Counter: defaultCounter,
+		Counter: counterClone,
 		G:       runtime.NumGoroutine(),
 		C:       atomic.LoadInt32(&concurrency),
 		T:       time.Now(),
@@ -64,4 +68,5 @@ func reportToMaster() {
 	}
 	var result ReportResult
 	client.Call("ReportService.ReportStat", arg, &result)
+	log.Printf("told %s %+v", Flags.MasterAddr, arg)
 }

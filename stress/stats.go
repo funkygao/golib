@@ -5,14 +5,8 @@ import (
 	"log"
 	"runtime"
 	"sort"
-	"sync"
 	"sync/atomic"
 	"time"
-)
-
-var (
-	counterMutex   sync.RWMutex
-	defaultCounter Counter = make(Counter)
 )
 
 func IncCounter(key string, delta int64) {
