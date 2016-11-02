@@ -39,6 +39,7 @@ func runMasterReporter() {
 	defer ticker.Stop()
 
 	lastCounter := make(Counter)
+	lastQps := make(Counter)
 	minCounter := make(Counter)
 	maxCounter := make(Counter)
 	for range ticker.C {
@@ -70,6 +71,7 @@ func runMasterReporter() {
 		for _, k := range sortedKeys {
 			v := counters[k]
 
+			// calc min/max
 			min := (v - lastCounter[k]) / Flags.Tick
 			max := (v - lastCounter[k]) / Flags.Tick
 			x, present := minCounter[k]
@@ -89,8 +91,17 @@ func runMasterReporter() {
 				maxCounter[k] = max
 			}
 
-			s += fmt.Sprintf("%s:%6d/%-9d(%4d-%-6d) ", k, (v-lastCounter[k])/Flags.Tick, v,
-				min, max)
+			qps := (v - lastCounter[k]) / Flags.Tick
+			qpsDeltaDirection := "▲"
+			qpsDelta := qps - lastQps[k]
+			if qpsDelta < 0 {
+				qpsDelta = -qpsDelta
+				qpsDeltaDirection = "▾"
+			}
+
+			s += fmt.Sprintf("%s: %s%-5d %5d/%-9d(%4d-%-5d) ", k, qpsDeltaDirection, qpsDelta, qps, v, min, max)
+
+			lastQps[k] = qps
 			lastCounter[k] = v
 		}
 		log.Printf("slave:%-2d C:%-5d G:%-5d qps: {%s}", slaves, c, gn, s)
