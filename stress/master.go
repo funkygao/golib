@@ -3,7 +3,6 @@ package stress
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"net/rpc"
 	"os"
 	"runtime"
@@ -43,14 +42,6 @@ func init() {
 	}
 
 	instanceId = fmt.Sprintf("%s-%s", host, strings.Replace(uuid.New(), "-", "", -1))
-
-	if Flags.MasterAddr == "" {
-		s := new(ReportService)
-		rpc.Register(s)
-		rpc.HandleHTTP()
-		log.Println("Master report server ready on :10093")
-		go http.ListenAndServe(":10093", nil) // TODO
-	}
 }
 
 func reportToMaster() {
@@ -70,9 +61,14 @@ func reportToMaster() {
 	}
 	var client, err = rpc.DialHTTP("tcp", Flags.MasterAddr)
 	if err != nil {
-		log.Println(err)
+		log.Printf("report to master: %v", err)
+		return
 	}
 	var result ReportResult
-	client.Call("ReportService.ReportStat", arg, &result)
-	log.Printf("told %s {C:%-5d G:%-5d %+v}", Flags.MasterAddr, arg.C, arg.G, arg.Counter)
+	err = client.Call("ReportService.ReportStat", arg, &result)
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("told %s {C:%-5d G:%-5d %+v}", Flags.MasterAddr, arg.C, arg.G, arg.Counter)
+	}
 }

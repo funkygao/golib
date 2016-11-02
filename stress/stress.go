@@ -2,6 +2,8 @@ package stress
 
 import (
 	"log"
+	"net/http"
+	"net/rpc"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -29,6 +31,11 @@ func (this *waitGroupWrapper) Wait() {
 func RunStress(cb func(seq int)) {
 	switch Flags.MasterAddr {
 	case "":
+		s := new(ReportService)
+		rpc.Register(s)
+		rpc.HandleHTTP()
+		log.Println("Master report server ready on :10093")
+		go http.ListenAndServe(":10093", nil) // TODO
 		go runMasterReporter()
 
 	default:
