@@ -27,6 +27,12 @@ type ReportResult struct{}
 type ReportService struct{}
 
 func (r *ReportService) ReportStat(arg *ReportArg, result *ReportResult) error {
+	counterMutex.Lock()
+	defer counterMutex.Unlock()
+
+	globalStats[arg.Id] = arg
+	atomic.AddInt32(&activeSlaves, 1)
+
 	return nil
 }
 
@@ -42,7 +48,7 @@ func init() {
 		s := new(ReportService)
 		rpc.Register(s)
 		rpc.HandleHTTP()
-		log.Println("master report server ready on :10093")
+		log.Println("Master report server ready on :10093")
 		go http.ListenAndServe(":10093", nil) // TODO
 	}
 }
@@ -68,5 +74,5 @@ func reportToMaster() {
 	}
 	var result ReportResult
 	client.Call("ReportService.ReportStat", arg, &result)
-	log.Printf("told %s %+v", Flags.MasterAddr, arg)
+	log.Printf("told %s {C:%-5d G:%-5d %+v}", Flags.MasterAddr, arg.C, arg.G, arg.Counter)
 }

@@ -43,16 +43,32 @@ func runMasterReporter() {
 	maxCounter := make(Counter)
 	for range ticker.C {
 		counterMutex.RLock()
-		s := ""
 		c := atomic.LoadInt32(&concurrency)
 		gn := runtime.NumGoroutine()
-		sortedKeys := make([]string, 0, len(defaultCounter))
-		for k, _ := range defaultCounter {
+		slaves := atomic.LoadInt32(&activeSlaves)
+		counters := make(Counter, len(defaultCounter))
+		for k, v := range defaultCounter {
+			counters[k] = v
+		}
+		for _, stat := range globalStats {
+			c += stat.C
+			gn += stat.G
+			for k, v := range stat.Counter {
+				counters[k] += v
+			}
+		}
+
+		// reset active slaves counter each tick
+		atomic.StoreInt32(&activeSlaves, 0)
+
+		sortedKeys := make([]string, 0, len(counters))
+		for k, _ := range counters {
 			sortedKeys = append(sortedKeys, k)
 		}
 		sort.Strings(sortedKeys)
+		s := ""
 		for _, k := range sortedKeys {
-			v := defaultCounter[k]
+			v := counters[k]
 
 			min := (v - lastCounter[k]) / Flags.Tick
 			max := (v - lastCounter[k]) / Flags.Tick
@@ -77,7 +93,7 @@ func runMasterReporter() {
 				min, max)
 			lastCounter[k] = v
 		}
-		log.Printf("c:%-5d go:%-5d qps: {%s}", c, gn, s)
+		log.Printf("slave:%-2d C:%-5d G:%-5d qps: {%s}", slaves, c, gn, s)
 		counterMutex.RUnlock()
 	}
 

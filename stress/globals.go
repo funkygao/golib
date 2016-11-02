@@ -10,4 +10,8 @@ var (
 
 	counterMutex   sync.RWMutex
 	defaultCounter Counter = make(Counter)
+
+	// master only
+	activeSlaves int32
+	globalStats  = make(map[string]*ReportArg)
 )
