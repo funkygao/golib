@@ -64,6 +64,8 @@ func reportToMaster() {
 		log.Printf("report to master: %v", err)
 		return
 	}
+	defer client.Close()
+
 	var result ReportResult
 	err = client.Call("ReportService.ReportStat", arg, &result)
 	if err != nil {
