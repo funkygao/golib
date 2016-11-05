@@ -1,6 +1,7 @@
 package stress
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -34,8 +35,9 @@ func RunStress(cb func(seq int)) {
 		s := new(ReportService)
 		rpc.Register(s)
 		rpc.HandleHTTP()
-		log.Println("Master report server ready on :10093")
-		go http.ListenAndServe(":10093", nil) // TODO
+		masterAddr := fmt.Sprintf(":%d", MasterPort)
+		log.Printf("Master report server ready on :%s", masterAddr)
+		go http.ListenAndServe(masterAddr, nil) // TODO
 		go runMasterReporter()
 
 	default:

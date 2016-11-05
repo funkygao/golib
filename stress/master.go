@@ -44,7 +44,7 @@ func init() {
 	instanceId = fmt.Sprintf("%s-%s", host, strings.Replace(uuid.New(), "-", "", -1))
 }
 
-func reportToMaster() {
+func reportToMaster() error {
 	counterMutex.RLock()
 	counterClone := make(Counter, len(defaultCounter))
 	for k, v := range defaultCounter {
@@ -61,8 +61,7 @@ func reportToMaster() {
 	}
 	var client, err = rpc.DialHTTP("tcp", Flags.MasterAddr)
 	if err != nil {
-		log.Printf("report to master: %v", err)
-		return
+		return err
 	}
 	defer client.Close()
 
@@ -73,4 +72,6 @@ func reportToMaster() {
 	} else {
 		log.Printf("told %s {C:%-5d G:%-5d %+v}", Flags.MasterAddr, arg.C, arg.G, arg.Counter)
 	}
+
+	return nil
 }

@@ -3,6 +3,7 @@ package stress
 import (
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 	"sort"
 	"sync/atomic"
@@ -29,8 +30,19 @@ func runSlaveReporter() {
 	ticker := time.NewTicker(time.Second * time.Duration(Flags.Tick))
 	defer ticker.Stop()
 
+	errors := 0
 	for range ticker.C {
-		reportToMaster()
+		if err := reportToMaster(); err != nil {
+			log.Printf("report to master: %v", err)
+
+			errors++
+			if errors > 5 {
+				log.Println("master might have died, quit...")
+				os.Exit(1)
+			}
+		} else {
+			errors = 0
+		}
 	}
 }
 
