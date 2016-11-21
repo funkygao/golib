@@ -6,6 +6,8 @@ package sync2
 
 import (
 	"testing"
+
+	"github.com/funkygao/assert"
 )
 
 func TestAtomicString(t *testing.T) {
@@ -29,4 +31,14 @@ func TestAtomicString(t *testing.T) {
 	if s.Get() != "c" {
 		t.Errorf("want c, got %s", s.Get())
 	}
+}
+
+func TestAtomicBool(t *testing.T) {
+	var b AtomicBool
+	assert.Equal(t, false, b.Get()) // false by default
+
+	b.Set(true)
+	assert.Equal(t, true, b.Get())
+	b.Set(false)
+	assert.Equal(t, false, b.Get())
 }

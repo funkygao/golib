@@ -10,6 +10,20 @@ import (
 	"time"
 )
 
+type AtomicBool struct{ v int32 }
+
+func (b *AtomicBool) Set(v bool) {
+	if v {
+		atomic.StoreInt32(&b.v, 1)
+	} else {
+		atomic.StoreInt32(&b.v, 0)
+	}
+}
+
+func (b *AtomicBool) Get() bool {
+	return atomic.LoadInt32(&b.v) == 1
+}
+
 type AtomicInt32 int32
 
 func (i *AtomicInt32) Add(n int32) int32 {
