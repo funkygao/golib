@@ -13,7 +13,8 @@ type top struct {
 	rowsCh chan []string
 	rowFmt string
 
-	headerColor termbox.Attribute
+	headerColor          termbox.Attribute
+	maxFooter, sumFooter bool
 
 	w, h  int
 	close chan struct{}

@@ -11,3 +11,15 @@ func WithHeaderColor(color termbox.Attribute) option {
 		t.headerColor = color
 	}
 }
+
+func WithSumFooter() option {
+	return func(t *top) {
+		t.sumFooter = true
+	}
+}
+
+func WithMaxFooter() option {
+	return func(t *top) {
+		t.maxFooter = true
+	}
+}
