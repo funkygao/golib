@@ -29,7 +29,9 @@ func (this *waitGroupWrapper) Wait() {
 	atomic.StoreInt32(&concurrency, 0)
 }
 
-func RunStress(cb func(seq int)) {
+type BenchFunc func(int)
+
+func RunStress(cb BenchFunc) {
 	switch Flags.MasterAddr {
 	case "":
 		s := new(ReportService)
