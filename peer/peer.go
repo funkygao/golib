@@ -18,15 +18,23 @@ type Peer struct {
 // New creates or joins a gossip cluster with the seed nodes.
 // We will listen for cluster communications on the given addr:port.
 // We advertise a HTTP API, reachable on apiPort.
-func New(addr string, port int, tags []string, seeds []string, apiPort int) (*Peer, error) {
+func New(addr string, port int, tags []string, seeds []string, apiPort int, discardLog bool) (*Peer, error) {
 	d := newDelegate()
 
+	// config
 	cf := memberlist.DefaultLANConfig()
-	host, _ := os.Hostname()
+	host, err := os.Hostname()
+	if err != nil {
+		panic(err)
+	}
 	cf.Name = fmt.Sprintf("%s-%d", host, os.Getpid())
-	cf.BindAddr = addr
+	if addr != "" {
+		cf.BindAddr = addr
+	}
 	cf.BindPort = port
-	cf.LogOutput = ioutil.Discard
+	if discardLog {
+		cf.LogOutput = ioutil.Discard
+	}
 	cf.Delegate = d
 	cf.Events = d
 
@@ -35,7 +43,9 @@ func New(addr string, port int, tags []string, seeds []string, apiPort int) (*Pe
 		return nil, err
 	}
 
+	// initialize the delegate
 	d.init(cf.Name, tags, ml.LocalNode().Addr.String(), apiPort, ml.NumMembers)
+
 	ml.Join(seeds)
 	if len(seeds) > 0 {
 		go func(d time.Duration) {
@@ -66,11 +76,6 @@ func (p *Peer) Leave(timeout time.Duration) error {
 // ClusterSize returns the total size of the cluster from this node's perspective.
 func (p *Peer) ClusterSize() int {
 	return p.m.NumMembers()
-}
-
-// Broadcast sends user data via gossip to members of the cluster. TODO
-func (p *Peer) Broadcast(b []byte) {
-	panic("Broadcast() not implemented")
 }
 
 // State returns a JSON-serializable dump of cluster state.
