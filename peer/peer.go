@@ -68,6 +68,11 @@ func (p *Peer) ClusterSize() int {
 	return p.m.NumMembers()
 }
 
+// Broadcast sends user data via gossip to members of the cluster. TODO
+func (p *Peer) Broadcast(b []byte) {
+	panic("Broadcast() not implemented")
+}
+
 // State returns a JSON-serializable dump of cluster state.
 // Useful for debugging.
 func (p *Peer) State() map[string]interface{} {
