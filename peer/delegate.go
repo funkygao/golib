@@ -18,6 +18,7 @@ type delegate struct {
 
 	broadcast *memberlist.TransmitLimitedQueue
 	data      map[string]peerInfo
+	myName    string
 }
 
 func newDelegate() *delegate {
@@ -31,6 +32,7 @@ func (d *delegate) init(myName string, myTags []string, apiAddr string, apiPort 
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	d.myName = myName
 	d.broadcast = &memberlist.TransmitLimitedQueue{
 		NumNodes:       numNodes,
 		RetransmitMult: 3,
