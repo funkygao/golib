@@ -19,18 +19,17 @@ func (l *LamportClock) Inc() LamportTime {
 }
 
 func (l *LamportClock) Witness(v LamportTime) {
-LOOP:
+	for {
+		this := atomic.LoadUint64(&l.v)
+		that := uint64(v)
+		if that < this {
+			// that value is older
+			return
+		}
 
-	this := atomic.LoadUint64(&l.v)
-	that := uint64(v)
-	if that < this {
-		// that value is older
-		return
-	}
-
-	// ensure that our local clock is at least 1 ahead
-	if !atomic.CompareAndSwapUint64(&l.v, this, that+1) {
-		println(l.v)
-		goto LOOP
+		// ensure that our local clock is at least 1 ahead
+		if atomic.CompareAndSwapUint64(&l.v, this, that+1) {
+			break
+		}
 	}
 }
