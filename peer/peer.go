@@ -89,3 +89,10 @@ func (p *Peer) State() map[string]interface{} {
 		"delegate": p.d.state(),
 	}
 }
+
+// Join is used to take an existing Memberlist(seed nodes) and attempt to join a
+// cluster by contacting all the given hosts and performing a state sync.
+func (p *Peer) Join(seeds []string) error {
+	_, err := p.m.Join(seeds)
+	return err
+}
