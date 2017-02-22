@@ -12,19 +12,19 @@ var (
 	_ memberlist.EventDelegate = &delegate{}
 )
 
-// delegate manages gossiped data: the set of peers, their type and API port.
+// delegate manages gossiped data: the set of members, their type and API port.
 type delegate struct {
 	mu sync.RWMutex
 
 	broadcast *memberlist.TransmitLimitedQueue
-	data      map[string]peerInfo
+	members   map[string]memberInfo
 	myName    string
 }
 
 func newDelegate() *delegate {
 	return &delegate{
 		broadcast: nil,
-		data:      map[string]peerInfo{},
+		members:   map[string]memberInfo{},
 	}
 }
 
@@ -37,20 +37,20 @@ func (d *delegate) init(myName string, myTags []string, apiAddr string, apiPort 
 		NumNodes:       numNodes,
 		RetransmitMult: 3,
 	}
-	d.data[myName] = peerInfo{
+	d.members[myName] = memberInfo{
 		Tags:    myTags,
 		APIAddr: apiAddr,
 		APIPort: apiPort,
 	}
 }
 
-func (d *delegate) state() map[string]peerInfo {
+func (d *delegate) state() map[string]memberInfo {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	// snapshot clone
-	r := map[string]peerInfo{}
-	for k, v := range d.data {
+	r := map[string]memberInfo{}
+	for k, v := range d.members {
 		r[k] = v
 	}
 	return r
@@ -58,7 +58,8 @@ func (d *delegate) state() map[string]peerInfo {
 
 // Implements memberlist.Delegate.
 func (d *delegate) NodeMeta(limit int) []byte {
-	return []byte{} // no meta-data
+	// memberlist.Node.Meta
+	return []byte{} // TODO encode my tags
 }
 
 // Implements memberlist.Delegate.
@@ -67,16 +68,26 @@ func (d *delegate) NotifyMsg(b []byte) {
 		return
 	}
 
-	var data map[string]peerInfo
-	if err := json.Unmarshal(b, &data); err != nil {
+	t := messageType(b[0])
+	switch t {
+	case messageTypeLeave:
+	case messageTypeJoin:
+		// TODO decodeMessage b[1:]
+	case messageTypePushPull:
+	case messageTypeUserEvent:
+	default:
+	}
+
+	var members map[string]memberInfo
+	if err := json.Unmarshal(b, &members); err != nil {
 		// TODO log err
 		return
 	}
 
 	d.mu.Lock()
-	for k, v := range data {
-		// Removing data is handled by NotifyLeave
-		d.data[k] = v
+	for k, v := range members {
+		// Removing members is handled by NotifyLeave
+		d.members[k] = v
 	}
 	d.mu.Unlock()
 }
@@ -94,12 +105,22 @@ func (d *delegate) LocalState(join bool) []byte {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	b, _ := json.Marshal(d.data)
+	//encodeMessage(messageTypePushPull, messagePushPull)
+
+	b, _ := json.Marshal(d.members)
 	return b
 }
 
 // Implements memberlist.Delegate.
 func (d *delegate) MergeRemoteState(b []byte, join bool) {
+	if len(b) == 0 {
+		return
+	}
+
+	if false && messageType(b[0]) != messageTypePushPull {
+		return
+	}
+
 	d.NotifyMsg(b)
 }
 
@@ -109,7 +130,7 @@ func (d *delegate) NotifyJoin(n *memberlist.Node) {}
 // Implements memberlist.EventDelegate.
 func (d *delegate) NotifyLeave(n *memberlist.Node) {
 	d.mu.Lock()
-	delete(d.data, n.Name)
+	delete(d.members, n.Name)
 	d.mu.Unlock()
 }
 
