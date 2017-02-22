@@ -2,6 +2,7 @@ package ringbuffer
 
 import (
 	"testing"
+	"time"
 
 	"github.com/funkygao/assert"
 )
@@ -19,6 +20,25 @@ func TestRingBufferBasics(t *testing.T) {
 	}
 }
 
+func TestRingBufferAdvanced(t *testing.T) {
+	rb, _ := New(128)
+	go func() {
+		for i := 0; i < 1<<10; i++ {
+			rb.Write(i + 1)
+		}
+	}()
+
+	var last int
+	for i := 0; i < 1<<10; i++ {
+		r := rb.Read().(int)
+		if r-last != 1 {
+			t.Fatalf("%d %d", r, last)
+		}
+
+		last = r
+	}
+}
+
 func TestRingBufferRewind(t *testing.T) {
 	rb, _ := New(128)
 	for i := 0; i < 1<<20; i++ {
@@ -30,8 +50,46 @@ func TestRingBufferRewind(t *testing.T) {
 	}
 }
 
-func TestRinbBufferAdvanceAndRewind(t *testing.T) {
+func TestReadTimeout(t *testing.T) {
+	rb, _ := New(16)
+	t0 := time.Now()
+	r, ok := rb.ReadTimeout(time.Second)
+	assert.Equal(t, nil, r)
+	assert.Equal(t, false, ok)
+	assert.Equal(t, true, time.Since(t0) > time.Second)
+}
 
+func TestRinbBufferAdvanceAndRewind(t *testing.T) {
+	rb, _ := New(8)
+	go func() {
+		for i := 0; i < 30; i++ {
+			rb.Write(i + 1)
+
+			if i < 3 {
+				rb.Advance()
+			}
+		}
+	}()
+
+	receivedInts := make(map[int]struct{})
+	rewinded := false
+	for {
+		r, ok := rb.ReadTimeout(time.Second)
+		if !ok {
+			break
+		}
+
+		v := r.(int)
+		receivedInts[v] = struct{}{}
+		t.Logf("<- %d", v)
+
+		if !rewinded && v == 5 {
+			rb.Rewind()
+			rewinded = true
+		}
+	}
+
+	assert.Equal(t, 30, len(receivedInts))
 }
 
 func TestNewWithError(t *testing.T) {
