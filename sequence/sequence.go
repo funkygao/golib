@@ -24,6 +24,12 @@ func (s *Sequence) Add(v int) {
 	s.mu.Unlock()
 }
 
+func (s *Sequence) Length() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.datas)
+}
+
 func (s *Sequence) Summary() (min, max int, loss []int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
