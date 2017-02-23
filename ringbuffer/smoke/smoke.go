@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -14,25 +15,27 @@ import (
 )
 
 const (
-	msgN     = 1 << 7
+	msgN     = 1 << 6
 	ringSize = 32
 	batch    = 5
 )
 
 type producer struct {
-	rb  *ringbuffer.RingBuffer
-	wg  sync.WaitGroup
-	seq *sequence.Sequence
+	rb          *ringbuffer.RingBuffer
+	wg          sync.WaitGroup
+	kafkaSentOk *sequence.Sequence
 
-	out chan int
+	out   chan int
+	rbOut []int
 }
 
 func newProducer() *producer {
 	rb, _ := ringbuffer.New(ringSize)
 	p := &producer{
-		rb:  rb,
-		seq: sequence.New(),
-		out: make(chan int, 25),
+		rb:          rb,
+		kafkaSentOk: sequence.New(),
+		out:         make(chan int, 25),
+		rbOut:       []int{},
 	}
 
 	p.wg.Add(1)
@@ -42,6 +45,35 @@ func newProducer() *producer {
 	go p.sendToKafka()
 
 	return p
+}
+
+func (p *producer) brokenIdx() []int {
+	r := make([]int, 0)
+	var last = p.rbOut[0]
+	for x, i := range p.rbOut[1:] {
+		if i != last+1 {
+			r = append(r, x)
+		}
+
+		last = i
+	}
+
+	return r
+}
+
+func (p *producer) spans() string {
+	var s = "["
+	spans := p.brokenIdx()
+	j := 0
+	for i, v := range p.rbOut {
+		if i == spans[j] {
+			s += color.Red("%d ", v)
+		} else {
+			s += fmt.Sprintf("%d ", v)
+		}
+	}
+
+	return s[:len(s)-1] + "]"
 }
 
 func (p *producer) send(i int) {
@@ -54,9 +86,9 @@ func (p *producer) senderWorker() {
 	for {
 		if msg, ok := p.rb.ReadTimeout(time.Second); ok {
 			i := msg.(int)
+			p.rbOut = append(p.rbOut, i)
 			p.out <- i
 		} else {
-			log.Println("bye from sender worker!")
 			close(p.out)
 			break
 		}
@@ -73,7 +105,7 @@ func (p *producer) sendToKafka() {
 
 		b++
 		if b == batch {
-			if sampling.SampleRateSatisfied(1200) {
+			if sampling.SampleRateSatisfied(1800) {
 				// fails
 				log.Println(color.Red("%+v", ints))
 
@@ -86,7 +118,7 @@ func (p *producer) sendToKafka() {
 
 				for j := 0; j < batch; j++ {
 					p.rb.Advance()
-					p.seq.Add(ints[j])
+					p.kafkaSentOk.Add(ints[j])
 				}
 			}
 
@@ -100,9 +132,9 @@ func (p *producer) close() {
 	log.Println("closing...")
 	p.wg.Wait()
 
-	log.Println(p.seq.Length())
-	min, max, loss := p.seq.Summary()
-	log.Println(p.seq)
+	log.Printf("msg=%d, kafka sent=%d", msgN, p.kafkaSentOk.Length())
+	min, max, loss := p.kafkaSentOk.Summary()
+	log.Println("kafka sent:", p.kafkaSentOk)
 	log.Printf("%d-%d", min, max)
 	if len(loss) == 0 {
 		log.Println(color.Green("ok"))
@@ -110,6 +142,8 @@ func (p *producer) close() {
 		log.Println(color.Red("lost %d", len(loss)))
 		log.Println(loss)
 	}
+
+	log.Println(p.spans())
 }
 
 func main() {

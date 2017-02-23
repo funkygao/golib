@@ -35,6 +35,7 @@ func New(queueSize uint64) (*RingBuffer, error) {
 		lastCommittedIndex: 0,
 		nextFreeIndex:      1,
 		readerIndex:        1,
+		highWatermark:      1,
 		contents:           make([]interface{}, queueSize),
 	}, nil
 }
