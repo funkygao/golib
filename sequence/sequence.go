@@ -3,7 +3,6 @@
 package sequence
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 )
@@ -59,8 +58,6 @@ func (s *Sequence) Summary() (min, max int, loss []int) {
 		loss = append(loss, k)
 	}
 	sort.Ints(loss)
-
-	fmt.Println(s.datas)
 
 	return
 }
