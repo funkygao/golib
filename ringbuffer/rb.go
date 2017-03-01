@@ -18,8 +18,6 @@ type RingBuffer struct {
 	padding3           [8]uint64
 	readerIndex        uint64 //
 	padding4           [8]uint64
-	highWatermark      uint64 //
-	padding5           [8]uint64
 	contents           []interface{}
 }
 
@@ -35,7 +33,6 @@ func New(queueSize uint64) (*RingBuffer, error) {
 		lastCommittedIndex: 0,
 		nextFreeIndex:      1,
 		readerIndex:        1,
-		highWatermark:      1,
 		contents:           make([]interface{}, queueSize),
 	}, nil
 }
@@ -63,29 +60,4 @@ func (rb *RingBuffer) Read() interface{} {
 	}
 
 	return rb.contents[myIndex&rb.indexMask]
-}
-
-func (rb *RingBuffer) ReadTimeout(timeout time.Duration) (interface{}, bool) {
-	var (
-		t0      = time.Now()
-		myIndex = atomic.AddUint64(&rb.readerIndex, 1) - 1
-	)
-	for myIndex > atomic.LoadUint64(&rb.lastCommittedIndex) {
-		if time.Since(t0) < timeout {
-			time.Sleep(backoff)
-		} else {
-			return nil, false
-		}
-	}
-
-	return rb.contents[myIndex&rb.indexMask], true
-}
-
-// Rewind will rewind contents to last advanced position for reading.
-func (rb *RingBuffer) Rewind() {
-	atomic.StoreUint64(&rb.readerIndex, atomic.LoadUint64(&rb.highWatermark))
-}
-
-func (rb *RingBuffer) Advance() {
-	atomic.AddUint64(&rb.highWatermark, 1)
 }
