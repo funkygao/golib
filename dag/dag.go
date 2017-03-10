@@ -1,4 +1,4 @@
-// Directed Acyclic Graph implementation in golang
+// Directed Acyclic Graph implementation in golang.
 package dag
 
 import (
@@ -12,11 +12,11 @@ type Dag struct {
 }
 
 type Node struct {
-	name         string
-	indegree     int
-	val          interface{}
-	dependencies []string
-	children     []*Node
+	name string
+	val  interface{}
+
+	indegree int
+	children []*Node
 }
 
 func New() *Dag {
@@ -25,8 +25,8 @@ func New() *Dag {
 	return this
 }
 
-func (this *Dag) AddVertex(name string) *Node {
-	node := &Node{name: name}
+func (this *Dag) AddVertex(name string, val interface{}) *Node {
+	node := &Node{name: name, val: val}
 	this.nodes[name] = node
 	return node
 }
@@ -59,8 +59,14 @@ func (this *Dag) HasPathTo(that string) bool {
 }
 
 func (this *Node) dotGraph(sb *str.StringBuilder) {
-	if len(this.dependencies) == 0 {
+	if len(this.children) == 0 {
 		sb.WriteString(fmt.Sprintf("\t\"%s\";\n", this.name))
+		return
+	}
+
+	for _, child := range this.children {
+		sb.WriteString(fmt.Sprintf(`%s -> %s [label="%v"]`, this.name, child.name, this.val))
+		sb.WriteString("\r\n")
 	}
 }
 
