@@ -45,5 +45,9 @@ func Cyan(format string, a ...interface{}) string {
 }
 
 func colored(color string, format string, a ...interface{}) string {
+	if len(a) == 0 {
+		return Colorize([]string{color}, format)
+	}
+
 	return Colorize([]string{color}, fmt.Sprintf(format, a...))
 }
