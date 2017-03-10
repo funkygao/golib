@@ -14,7 +14,11 @@ func Colorize(colors []string, format string, a ...interface{}) (s string) {
 		buf.WriteString(color_table[color])
 	}
 
-	buf.WriteString(fmt.Sprintf(format, a...))
+	if len(a) == 0 {
+		buf.WriteString(format)
+	} else {
+		buf.WriteString(fmt.Sprintf(format, a...))
+	}
 	buf.WriteString(color_table[Reset])
 	s = buf.String()
 	return
