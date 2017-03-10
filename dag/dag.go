@@ -38,7 +38,7 @@ func (this *Dag) AddEdge(from, to string) {
 	toNode.indegree++
 }
 
-func (this *Dag) MakeDotGraph(fn string) {
+func (this *Dag) MakeDotGraph(fn string) string {
 	file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		panic(err)
@@ -52,6 +52,7 @@ func (this *Dag) MakeDotGraph(fn string) {
 	}
 	sb.WriteString("}\n")
 	file.WriteString(sb.String())
+	return sb.String()
 }
 
 func (this *Dag) HasPathTo(that string) bool {
