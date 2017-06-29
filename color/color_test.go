@@ -1,8 +1,10 @@
 package color
 
 import (
-	"github.com/funkygao/assert"
+	"strings"
 	"testing"
+
+	"github.com/funkygao/assert"
 )
 
 func TestColorize(t *testing.T) {
@@ -19,7 +21,31 @@ func TestBlueWithFormat(t *testing.T) {
 }
 
 func TestColorTable(t *testing.T) {
+	// fg
 	for c := range color_table {
-		t.Logf("%15s %s", c, colored(c, c))
+		if strings.HasPrefix(c, "Fg") {
+			t.Logf("%15s %s", c, colored(c, c))
+		}
 	}
+
+	t.Log()
+
+	// bg
+	for c := range color_table {
+		if strings.HasPrefix(c, "Bg") {
+			t.Logf("%15s %s", c, colored(c, c))
+		}
+	}
+
+	t.Log()
+
+	// misc
+	for c := range color_table {
+		if !(strings.HasPrefix(c, "Fg") || strings.HasPrefix(c, "Bg")) {
+			t.Logf("%15s %s", c, colored(c, c))
+		}
+	}
+
+	t.Log()
+	t.Log(Colorize([]string{FgCyan, Underscore, Blink, Bright, BgYellow}, "hello"))
 }
