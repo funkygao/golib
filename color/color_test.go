@@ -17,3 +17,9 @@ func TestRed(t *testing.T) {
 func TestBlueWithFormat(t *testing.T) {
 	assert.Equal(t, "\x1b[34mhello world\x1b[0m", Blue("hello %s", "world"))
 }
+
+func TestColorTable(t *testing.T) {
+	for c := range color_table {
+		t.Logf("%15s %s", c, colored(c, c))
+	}
+}
