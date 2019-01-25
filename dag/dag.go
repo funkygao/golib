@@ -25,6 +25,18 @@ func New() *Dag {
 	return this
 }
 
+func (this *Dag) Nodes() map[string]*Node {
+	return this.nodes
+}
+
+func (this *Node) Name() string {
+	return this.name
+}
+
+func (this *Node) Val() interface{} {
+	return this.val
+}
+
 func (this *Dag) AddVertex(name string, val interface{}) *Node {
 	node := &Node{name: name, val: val}
 	this.nodes[name] = node
