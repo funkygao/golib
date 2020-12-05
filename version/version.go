@@ -22,7 +22,7 @@ var (
 	Branch    = "unknown"
 	BuildUser = "unknown"
 	BuildDate = "unknown"
-        GoVersion = "unknown"
+	GoVersion= "unknown"
 )
 
 // Info provides the iterable version information.
@@ -32,5 +32,5 @@ var Info = map[string]string{
 	"branch":    Branch,
 	"buildUser": BuildUser,
 	"buildDate": BuildDate,
-        "goVersion": GoVersion,
+	"GoVersion": GoVersion,
 }
